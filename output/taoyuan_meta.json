@@ -1,0 +1,151 @@
+{
+  "dataset_info": {
+    "name": "桃園市行政區發展特徵資料",
+    "description": "桃園市13個行政區的人口、商業、所得、地理、公共建設、醫療等特徵資料",
+    "year": 110,
+    "last_updated": "2025-06-03 21:50:22",
+    "total_districts": 13,
+    "total_features": 13
+  },
+  "districts": [
+    "中壢區",
+    "八德區",
+    "大園區",
+    "大溪區",
+    "平鎮區",
+    "復興區",
+    "新屋區",
+    "桃園區",
+    "楊梅區",
+    "蘆竹區",
+    "觀音區",
+    "龍潭區",
+    "龜山區"
+  ],
+  "data_sources": {
+    "人口": "2 個特徵",
+    "商業": "5 個特徵",
+    "所得": "2 個特徵",
+    "地理": "1 個特徵",
+    "醫療": "3 個特徵"
+  },
+  "features": {
+    "人口_total_population": {
+      "source": "人口",
+      "indicator": "total_population",
+      "data_type": "int64",
+      "min_value": 12656.0,
+      "max_value": 458847.0,
+      "mean_value": 174799.3076923077,
+      "missing_count": 0
+    },
+    "人口_working_age_ratio": {
+      "source": "人口",
+      "indicator": "working_age_ratio",
+      "data_type": "float64",
+      "min_value": 70.93738542388071,
+      "max_value": 73.51239374241018,
+      "mean_value": 72.41295616291572,
+      "missing_count": 0
+    },
+    "商業_total_companies": {
+      "source": "商業",
+      "indicator": "total_companies",
+      "data_type": "float64",
+      "min_value": 268.0,
+      "max_value": 13729.0,
+      "mean_value": 4824.0,
+      "missing_count": 0
+    },
+    "商業_total_capital": {
+      "source": "商業",
+      "indicator": "total_capital",
+      "data_type": "float64",
+      "min_value": 29016600.0,
+      "max_value": 3196464301.0,
+      "mean_value": 1095242089.7692308,
+      "missing_count": 0
+    },
+    "商業_hhi_index": {
+      "source": "商業",
+      "indicator": "hhi_index",
+      "data_type": "float64",
+      "min_value": 2367.1832181884906,
+      "max_value": 2981.9792432732334,
+      "mean_value": 2678.05661930319,
+      "missing_count": 0
+    },
+    "商業_tertiary_industry_count": {
+      "source": "商業",
+      "indicator": "tertiary_industry_count",
+      "data_type": "float64",
+      "min_value": 242.0,
+      "max_value": 12107.0,
+      "mean_value": 4058.6923076923076,
+      "missing_count": 0
+    },
+    "商業_avg_capital_per_company": {
+      "source": "商業",
+      "indicator": "avg_capital_per_company",
+      "data_type": "float64",
+      "min_value": 108270.89552238806,
+      "max_value": 247314.45717660958,
+      "mean_value": 222501.60021263786,
+      "missing_count": 0
+    },
+    "所得_median_household_income": {
+      "source": "所得",
+      "indicator": "median_household_income",
+      "data_type": "float64",
+      "min_value": 398000.0,
+      "max_value": 530000.0,
+      "mean_value": 459923.07692307694,
+      "missing_count": 0
+    },
+    "所得_total_households": {
+      "source": "所得",
+      "indicator": "total_households",
+      "data_type": "float64",
+      "min_value": 3464.0,
+      "max_value": 279766.0,
+      "mean_value": 101479.84615384616,
+      "missing_count": 0
+    },
+    "地理_area_km2": {
+      "source": "地理",
+      "indicator": "area_km2",
+      "data_type": "float64",
+      "min_value": 33.795733295622234,
+      "max_value": 336.8805763671258,
+      "mean_value": 93.63255537896642,
+      "missing_count": 0
+    },
+    "醫療_medical_personnel_total": {
+      "source": "醫療",
+      "indicator": "medical_personnel_total",
+      "data_type": "float64",
+      "min_value": 50.0,
+      "max_value": 8959.0,
+      "mean_value": 2301.6153846153848,
+      "missing_count": 0
+    },
+    "醫療_medical_facilities_total": {
+      "source": "醫療",
+      "indicator": "medical_facilities_total",
+      "data_type": "float64",
+      "min_value": 6.0,
+      "max_value": 538.0,
+      "mean_value": 129.30769230769232,
+      "missing_count": 0
+    },
+    "醫療_total_beds": {
+      "source": "醫療",
+      "indicator": "total_beds",
+      "data_type": "float64",
+      "min_value": 4.0,
+      "max_value": 4506.0,
+      "mean_value": 1113.5384615384614,
+      "missing_count": 0
+    }
+  }
+}
