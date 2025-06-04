@@ -105,24 +105,30 @@ def perform_clustering(X, districts):
         cluster_districts = [districts[i] for i in range(len(districts)) if cluster_labels[i] == cluster_id]
         print(f"  集群 {cluster_id}: {len(cluster_districts)} 個行政區 - {', '.join(cluster_districts)}")
     
-    # 潛力等級映射
-    # 計算各群在t-SNE第一維度的平均值（非PCA主成分）
-    cluster_tsne_x_means = []
+    # 🔧 修正：基於所得水平進行潛力等級映射
+    # 載入特徵數據以獲取所得信息
+    df = pd.read_csv('output/taoyuan_features_enhanced.csv')
+    income_data = df.set_index('區域別')['所得_median_household_income'].to_dict()
+    
+    # 計算各集群的平均所得
+    cluster_incomes = []
     for cluster_id in range(3):
         cluster_mask = cluster_labels == cluster_id
-        tsne_x_mean = X_tsne[cluster_mask, 0].mean()  # t-SNE第一維度（X軸）平均值
-        cluster_tsne_x_means.append(tsne_x_mean)
+        cluster_districts_list = [districts[i] for i in range(len(districts)) if cluster_mask[i]]
+        cluster_income = np.mean([income_data[district] for district in cluster_districts_list])
+        cluster_incomes.append(cluster_income)
+        print(f"  集群 {cluster_id} 平均所得: {cluster_income:,.0f} 元")
     
-    # 按t-SNE第一維度平均值排序（升序排列，讓包含主要城市的集群成為高潛力）
-    cluster_order = np.argsort(cluster_tsne_x_means)  # 升序排列
+    # 按平均所得排序（降序：高所得=高潛力）
+    cluster_order = np.argsort(cluster_incomes)[::-1]  # 降序排列
     potential_mapping = {
         cluster_order[0]: '高潛力',
-        cluster_order[1]: '中潛力',
+        cluster_order[1]: '中潛力', 
         cluster_order[2]: '低潛力'
     }
     
-    print(f"✅ 潛力等級映射: {potential_mapping}")
-    print(f"  各集群t-SNE第一維度平均值: {[f'{mean:.1f}' for mean in cluster_tsne_x_means]}")
+    print(f"✅ 基於所得的潛力等級映射: {potential_mapping}")
+    print(f"  各集群平均所得排序: {[f'{cluster_incomes[i]:,.0f}元' for i in cluster_order]}")
     
     # 創建結果DataFrame
     results_df = pd.DataFrame({

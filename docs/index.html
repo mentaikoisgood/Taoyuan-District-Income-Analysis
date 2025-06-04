@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>桃園市行政區發展潛力分析儀表板</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- 標題區域 -->
+        <header class="header">
+            <h1>🏙️ 桃園市行政區發展潛力分析</h1>
+            <p class="subtitle">基於機器學習聚類分析的13個行政區發展潛力評估</p>
+        </header>
+
+        <!-- 主要指標卡片 -->
+        <section class="metrics-cards">
+            <div class="card high-potential">
+                <h3>高發展潛力</h3>
+                <div class="metric-value">4</div>
+                <div class="metric-label">個行政區</div>
+                <div class="districts-list">中壢區、桃園區、龜山區、蘆竹區</div>
+            </div>
+            <div class="card medium-potential">
+                <h3>中發展潛力</h3>
+                <div class="metric-value">5</div>
+                <div class="metric-label">個行政區</div>
+                <div class="districts-list">八德區、大園區、平鎮區、楊梅區、龍潭區</div>
+            </div>
+            <div class="card low-potential">
+                <h3>低發展潛力</h3>
+                <div class="metric-value">4</div>
+                <div class="metric-label">個行政區</div>
+                <div class="districts-list">大溪區、復興區、新屋區、觀音區</div>
+            </div>
+        </section>
+
+        <!-- 主要內容區域 -->
+        <main class="main-content">
+            <!-- 左側：聚類視覺化 -->
+            <section class="chart-section">
+                <h2>📊 聚類分析結果</h2>
+                <div class="chart-container">
+                    <canvas id="clusterChart"></canvas>
+                </div>
+                <div class="chart-info">
+                    <p><strong>輪廓係數:</strong> 0.463 (良好)</p>
+                    <p><strong>分析方法:</strong> t-SNE降維 + Ward層次聚類</p>
+                </div>
+            </section>
+
+            <!-- 右側：特徵雷達圖 -->
+            <section class="chart-section">
+                <h2>🎯 特徵分析雷達圖</h2>
+                <div class="radar-controls">
+                    <select id="districtSelect">
+                        <option value="">選擇行政區</option>
+                        <option value="中壢區">中壢區</option>
+                        <option value="八德區">八德區</option>
+                        <option value="大園區">大園區</option>
+                        <option value="大溪區">大溪區</option>
+                        <option value="平鎮區">平鎮區</option>
+                        <option value="復興區">復興區</option>
+                        <option value="桃園區">桃園區</option>
+                        <option value="新屋區">新屋區</option>
+                        <option value="楊梅區">楊梅區</option>
+                        <option value="龍潭區">龍潭區</option>
+                        <option value="龜山區">龜山區</option>
+                        <option value="蘆竹區">蘆竹區</option>
+                        <option value="觀音區">觀音區</option>
+                    </select>
+                </div>
+                <div class="chart-container">
+                    <canvas id="radarChart"></canvas>
+                </div>
+            </section>
+        </main>
+
+        <!-- 詳細數據表格 -->
+        <section class="data-table-section">
+            <h2>📋 詳細數據表格</h2>
+            <div class="table-container">
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>行政區</th>
+                            <th>潛力等級</th>
+                            <th>集群編號</th>
+                            <th>家庭收入中位數</th>
+                            <th>勞動年齡比例</th>
+                            <th>第三產業比例</th>
+                            <th>醫療指數</th>
+                            <th>分群機率</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- 動態生成 -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 關鍵洞察 -->
+        <section class="insights-section">
+            <h2>💡 關鍵洞察與政策建議</h2>
+            <div class="insights-grid">
+                <div class="insight-card">
+                    <h3>🏢 高潛力區域</h3>
+                    <ul>
+                        <li>集中在桃園核心都會區</li>
+                        <li>平均家庭收入 510,750 元</li>
+                        <li>第三產業發達，醫療資源充足</li>
+                        <li><strong>建議:</strong> 強化創新產業聚落發展</li>
+                    </ul>
+                </div>
+                <div class="insight-card">
+                    <h3>🌱 中潛力區域</h3>
+                    <ul>
+                        <li>介於都會與偏鄉之間</li>
+                        <li>平均家庭收入 457,800 元</li>
+                        <li>產業結構較為均衡</li>
+                        <li><strong>建議:</strong> 發展特色產業與觀光</li>
+                    </ul>
+                </div>
+                <div class="insight-card">
+                    <h3>🌾 低潛力區域</h3>
+                    <ul>
+                        <li>偏向農業與傳統產業</li>
+                        <li>平均家庭收入 411,750 元</li>
+                        <li>醫療資源相對不足</li>
+                        <li><strong>建議:</strong> 加強基礎建設與社會服務</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 方法說明 -->
+        <section class="methodology-section">
+            <h2>🔬 分析方法</h2>
+            <div class="method-steps">
+                <div class="step">
+                    <h4>STEP 1: 數據收集</h4>
+                    <p>整合人口、商業、所得、地理、醫療等多維度數據</p>
+                </div>
+                <div class="step">
+                    <h4>STEP 2: 特徵工程</h4>
+                    <p>創建5個關鍵特徵：勞動年齡比例、商業集中度、收入中位數、第三產業比例、醫療指數</p>
+                </div>
+                <div class="step">
+                    <h4>STEP 3: 聚類分析</h4>
+                    <p>使用t-SNE降維+Ward層次聚類，基於所得水平分配潛力等級</p>
+                </div>
+                <div class="step">
+                    <h4>STEP 4: 模型驗證</h4>
+                    <p>輪廓係數0.463，Davies-Bouldin指數0.545，驗證聚類質量</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 頁腳 -->
+        <footer class="footer">
+            <p>&copy; 2024 桃園市行政區發展潛力分析 | 
+               <a href="https://github.com/mentaikoisgood/Taoyuan-District-Income-Analysis" target="_blank">
+                   GitHub Repository
+               </a>
+            </p>
+        </footer>
+    </div>
+
+    <script src="js/data.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html> 
