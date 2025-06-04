@@ -1,10 +1,10 @@
 // 3級Jenks分級分析數據
-// 自動生成於 2025-06-04 19:17:30
+// 自動生成於 2025-06-04 19:29:13
 
 const DASHBOARD_DATA = {
   "title": "桃園市行政區3級Jenks分級分析",
   "subtitle": "基於Jenks自然斷點的13個行政區發展潛力評估 (0-10分制)",
-  "last_updated": "2025-06-04 19:17:30",
+  "last_updated": "2025-06-04 19:29:13",
   "summary": {
     "total_districts": 13,
     "method": "3級Jenks自然斷點",
@@ -491,28 +491,28 @@ const DASHBOARD_DATA = {
       "y": 10.0,
       "name": "桃園區",
       "level": "高潛力",
-      "color": "#2E8B57"
+      "color": "#FF6B6B"
     },
     {
       "x": 2.0,
       "y": 9.4,
       "name": "龜山區",
       "level": "高潛力",
-      "color": "#2E8B57"
+      "color": "#FF6B6B"
     },
     {
       "x": 3.0,
       "y": 7.3,
       "name": "中壢區",
       "level": "高潛力",
-      "color": "#2E8B57"
+      "color": "#FF6B6B"
     },
     {
       "x": 4.0,
       "y": 7.1,
       "name": "蘆竹區",
       "level": "高潛力",
-      "color": "#2E8B57"
+      "color": "#FF6B6B"
     },
     {
       "x": 5.0,
@@ -554,28 +554,28 @@ const DASHBOARD_DATA = {
       "y": 2.3,
       "name": "觀音區",
       "level": "低潛力",
-      "color": "#DC143C"
+      "color": "#4ECDC4"
     },
     {
       "x": 11.0,
       "y": 1.2,
       "name": "大溪區",
       "level": "低潛力",
-      "color": "#DC143C"
+      "color": "#4ECDC4"
     },
     {
       "x": 12.0,
       "y": 1.1,
       "name": "復興區",
       "level": "低潛力",
-      "color": "#DC143C"
+      "color": "#4ECDC4"
     },
     {
       "x": 13.0,
       "y": 0.0,
       "name": "新屋區",
       "level": "低潛力",
-      "color": "#DC143C"
+      "color": "#4ECDC4"
     }
   ],
   "feature_importance": [

@@ -141,9 +141,9 @@ def create_scatter_chart_data(results_df):
     
     scatter_data = []
     color_map = {
-        '高潛力': '#2E8B57',
-        '中潛力': '#FFA500', 
-        '低潛力': '#DC143C'
+        '高潛力': '#FF6B6B',      # 紅色 (Red)
+        '中潛力': '#FFA500',      # 橙色 (Orange)  
+        '低潛力': '#4ECDC4',      # 藍綠色 (Teal Blue)
     }
     
     for _, row in results_df.iterrows():
@@ -229,6 +229,433 @@ def create_method_info(config):
     
     return method_info
 
+# Map generation functions (integrated from former step6)
+
+def load_map_data():
+    """載入地圖數據和分級結果"""
+    print("📂 載入地圖數據和分級結果 (for map generation)...")
+    
+    try:
+        # 載入GeoJSON地理數據
+        gdf = gpd.read_file('data/taoyuan_districts.geojson')
+        print(f"✅ 成功載入 {len(gdf)} 個行政區的地理數據")
+        
+        return gdf
+        
+    except FileNotFoundError as e:
+        print(f"❌ 無法載入地理數據: {e}")
+        print("請確保 taoyuan_districts.geojson 文件位於 data/ 目錄下")
+        return None
+
+def merge_geodata_with_results(gdf, results_df):
+    """合併地理數據與分級結果"""
+    print("🔗 合併地理數據與分級結果...")
+    
+    if gdf is None or results_df is None:
+        print("❌ 地理數據或分級結果未載入，無法合併。")
+        return None
+
+    # 標準化區域名稱（移除可能的空格和特殊字符）
+    gdf['區域別_clean'] = gdf['名稱'].str.strip().str.replace('桃園市', '').str.replace('區', '')
+    results_df['區域別_clean'] = results_df['區域別'].str.strip().str.replace('桃園市', '').str.replace('區', '')
+    
+    # 合併數據
+    merged_gdf = gdf.merge(
+        results_df, 
+        left_on='區域別_clean', 
+        right_on='區域別_clean', 
+        how='left'
+    )
+    
+    # 檢查合併結果
+    print(f"✅ 成功合併 {len(merged_gdf)} 個行政區")
+    
+    # 檢查是否有未匹配的區域
+    unmatched = merged_gdf[merged_gdf['綜合分數'].isna()]
+    if len(unmatched) > 0:
+        print(f"⚠️  未匹配的區域 (地理數據中存在，但分級結果中缺失): {unmatched['名稱'].tolist()}")
+    
+    return merged_gdf
+
+def create_static_map(merged_gdf, config):
+    """創建靜態地圖"""
+    if merged_gdf is None or config is None:
+        print("❌ 無法創建靜態地圖：數據不完整。")
+        return None
+    print("🗺️ 創建靜態潛力分級地圖...")
+    
+    # 設定顏色映射
+    color_map = {
+        '高潛力': '#FF6B6B',      # 紅色 (Red)
+        '中潛力': '#FFA500',      # 橙色 (Orange)  
+        '低潛力': '#4ECDC4',      # 藍綠色 (Teal Blue)
+    }
+    
+    # 創建圖形
+    fig, ax = plt.subplots(1, 1, figsize=(15, 12))
+    
+    # 繪製行政區邊界和填色
+    for level in ['高潛力', '中潛力', '低潛力']:
+        subset = merged_gdf[merged_gdf['3級Jenks分級'] == level]
+        if not subset.empty:
+            subset.plot(
+                ax=ax,
+                color=color_map[level],
+                edgecolor='white',
+                linewidth=1.5,
+                alpha=0.8
+            )
+    
+    # 添加區域標籤
+    for idx, row in merged_gdf.iterrows():
+        if pd.notna(row.geometry) and pd.notna(row['綜合分數']) and row.geometry.centroid:
+            centroid = row.geometry.centroid
+            label_text = f"{row['區域別']}: {row['3級Jenks分級']}"
+            ax.annotate(
+                label_text,
+                xy=(centroid.x, centroid.y),
+                ha='center',
+                va='center',
+                fontsize=10,
+                fontweight='bold',
+                color='black',
+                bbox=dict(boxstyle="round,pad=0.3", facecolor='white', alpha=0.8)
+            )
+    
+    # 設定地圖樣式
+    if not merged_gdf.empty:
+        ax.set_xlim(merged_gdf.bounds.minx.min() - 0.01, merged_gdf.bounds.maxx.max() + 0.01)
+        ax.set_ylim(merged_gdf.bounds.miny.min() - 0.01, merged_gdf.bounds.maxy.max() + 0.01)
+    ax.set_aspect('equal')
+    ax.axis('off')
+    
+    # 添加標題
+    plt.title('桃園市行政區發展潛力分級地圖\n基於3級Jenks自然斷點分析', 
+              fontsize=18, fontweight='bold', pad=20)
+    
+    # 創建圖例
+    legend_elements = [
+        mpatches.Patch(color=color_map['高潛力'], label='高發展潛力'),
+        mpatches.Patch(color=color_map['中潛力'], label='中發展潛力'),
+        mpatches.Patch(color=color_map['低潛力'], label='低發展潛力')
+    ]
+    ax.legend(handles=legend_elements, loc='upper right', fontsize=12)
+    
+    # 添加數據來源和方法說明
+    plt.figtext(0.02, 0.02, 
+                f"數據來源: 桃園市政府開放數據\n分析方法: Jenks自然斷點分級 (3級)\n分數範圍: {config['score_range'][0]:.1f} - {config['score_range'][1]:.1f} (0-10分制)",
+                fontsize=10, ha='left')
+    
+    # 保存地圖
+    os.makedirs('output', exist_ok=True)
+    os.makedirs('docs', exist_ok=True)
+    output_path_output = 'output/taoyuan_potential_map.png'
+    output_path_docs = 'docs/taoyuan_potential_map.png'
+    plt.savefig(output_path_output, dpi=300, bbox_inches='tight', facecolor='white')
+    plt.savefig(output_path_docs, dpi=300, bbox_inches='tight', facecolor='white')
+    
+    print(f"✅ 靜態地圖已保存: {output_path_output} 和 {output_path_docs}")
+    plt.close()  # Close the figure to free memory
+    return fig
+
+def create_interactive_map(merged_gdf, config):
+    """創建互動式地圖"""
+    if merged_gdf is None or config is None:
+        print("❌ 無法創建互動式地圖：數據不完整。")
+        return None
+    print("🌐 創建互動式地圖...")
+    
+    # 計算桃園市中心點 (only use valid geometries)
+    valid_geometries = merged_gdf[merged_gdf.geometry.is_valid & merged_gdf.geometry.notna()]
+    if valid_geometries.empty:
+        print("⚠️ 沒有有效的地理數據來計算中心點。使用預設中心。")
+        center_lat, center_lon = 24.9937, 121.2988 # Default to Taoyuan City Hall
+    else:
+        center_lat = valid_geometries.geometry.centroid.y.mean()
+        center_lon = valid_geometries.geometry.centroid.x.mean()
+
+    # 創建基礎地圖
+    m = folium.Map(
+        location=[center_lat, center_lon],
+        zoom_start=10, # Adjusted zoom for better overview
+        tiles='OpenStreetMap'
+    )
+    
+    # 添加其他底圖選項
+    folium.TileLayer('CartoDB positron', name='CartoDB Positron').add_to(m)
+    folium.TileLayer('CartoDB dark_matter', name='CartoDB Dark').add_to(m)
+    
+    # 設定顏色映射
+    color_map = {
+        '高潛力': '#FF6B6B',      # 紅色 (Red)
+        '中潛力': '#FFA500',      # 橙色 (Orange)  
+        '低潛力': '#4ECDC4',      # 藍綠色 (Teal Blue)
+    }
+    
+    # 轉換為GeoJSON格式 (ensure only rows with geometry are included)
+    geojson_data_gdf = merged_gdf[merged_gdf.geometry.notna()]
+    if geojson_data_gdf.empty:
+        print("⚠️ 沒有地理數據可添加到互動式地圖。")
+    else:
+        geojson_data = geojson_data_gdf.to_json()
+
+        # 添加行政區圖層
+        folium.GeoJson(
+            geojson_data,
+            style_function=lambda feature: {
+                'fillColor': color_map.get(feature['properties'].get('3級Jenks分級'), '#808080'), # Default to gray if level is missing
+                'color': 'white',
+                'weight': 2,
+                'fillOpacity': 0.7,
+                'opacity': 1
+            },
+            highlight_function=lambda feature: {'weight': 4, 'fillOpacity': 0.9, 'opacity': 1},
+            tooltip=folium.GeoJsonTooltip(
+                fields=['區域別', '3級Jenks分級', '綜合分數', '排名'],
+                aliases=['行政區:', '潛力等級:', '綜合分數:', '排名:'],
+                style="background-color: white; border: 2px solid black; border-radius: 3px; box-shadow: 3px;"
+            )
+        ).add_to(m)
+
+        # 為每個行政區添加詳細彈出框 (only for rows with score and valid geometry)
+        for idx, row in geojson_data_gdf.iterrows():
+            if pd.notna(row['綜合分數']) and row.geometry.is_valid and row.geometry.centroid:
+                centroid = row.geometry.centroid
+                popup_html = f"""
+                <div style="font-family: Arial; width: 250px;">
+                    <h4 style="margin: 0; color: {color_map.get(row['3級Jenks分級'], '#000')};">
+                        {row['區域別']}
+                    </h4>
+                    <hr style="margin: 5px 0;">
+                    <p><strong>潛力等級:</strong> {row.get('3級Jenks分級', 'N/A')}</p>
+                    <p><strong>綜合分數:</strong> {row['綜合分數']:.1f}/10</p>
+                    <p><strong>排名:</strong> 第 {int(row['排名'])} 名</p>
+                    <hr style="margin: 5px 0;">
+                    <p style="font-size: 12px; color: #666;">
+                        發展潛力綜合評估
+                    </p>
+                </div>
+                """
+                
+                folium.Marker(
+                    location=[centroid.y, centroid.x],
+                    popup=folium.Popup(popup_html, max_width=300),
+                    icon=folium.DivIcon(
+                        html=f"""
+                        <div style="
+                            background-color: {color_map.get(row['3級Jenks分級'], '#808080')};
+                            color: white;
+                            border: 2px solid white;
+                            border-radius: 50%;
+                            width: 30px;
+                            height: 30px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-weight: bold;
+                            font-size: 12px;
+                            box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                        ">
+                            {int(row['排名'])}
+                        </div>
+                        """,
+                        icon_size=(30, 30),
+                        icon_anchor=(15, 15)
+                    )
+                ).add_to(m)
+    
+    # 添加圖例
+    legend_html = f"""
+    <div style="
+        position: fixed;
+        bottom: 50px; left: 10px; width: 180px; height: auto;
+        background-color: white; border:2px solid grey; z-index:9999;
+        font-size:14px; padding: 10px; border-radius: 5px;
+    ">
+        <h4 style="margin: 0 0 10px 0; text-align: center;">發展潛力等級</h4>
+        <p style="margin: 0;"><i class="fa fa-square" style="color: {color_map['高潛力']};"></i> 高發展潛力</p>
+        <p style="margin: 0;"><i class="fa fa-square" style="color: {color_map['中潛力']};"></i> 中發展潛力</p>
+        <p style="margin: 0;"><i class="fa fa-square" style="color: {color_map['低潛力']};"></i> 低發展潛力</p>
+        <hr style="margin: 8px 0;">
+        <p style="margin: 0; font-size: 12px; color: #666;">分數: {config['score_range'][0]:.1f}-{config['score_range'][1]:.1f}/10</p>
+    </div>
+    """
+    m.get_root().html.add_child(folium.Element(legend_html))
+    
+    # 添加圖層控制
+    folium.LayerControl().add_to(m)
+    
+    # 添加全屏按鈕
+    plugins.Fullscreen().add_to(m)
+    
+    # 保存互動式地圖
+    os.makedirs('docs', exist_ok=True)
+    output_path = 'docs/map_interactive.html'
+    m.save(output_path)
+    
+    print(f"✅ 互動式地圖已保存: {output_path}")
+    return m
+
+def create_map_data_for_web(merged_gdf, config):
+    """為網頁創建地圖數據 (e.g. for a custom JS map component if not using iframe)"""
+    if merged_gdf is None or config is None:
+        print("❌ 無法創建網頁地圖數據：數據不完整。")
+        return None
+    print("📊 創建網頁地圖數據 (GeoJSON)...")
+    
+    map_data = {
+        'type': 'FeatureCollection',
+        'features': []
+    }
+    
+    valid_gdf = merged_gdf[merged_gdf.geometry.notna() & pd.notna(merged_gdf['綜合分數'])]
+
+    for idx, row in valid_gdf.iterrows():
+        feature = {
+            'type': 'Feature',
+            'properties': {
+                'name': row['區域別'],
+                'level': row.get('3級Jenks分級', 'N/A'),
+                'score': float(round(row['綜合分數'], 1)),
+                'rank': int(row['排名']),
+                'color': {
+                    '高潛力': '#FF6B6B',
+                    '中潛力': '#FFA500',
+                    '低潛力': '#4ECDC4'
+                }.get(row.get('3級Jenks分級'), '#808080')
+            },
+            'geometry': mapping(row.geometry) # Uses shapely.geometry.mapping
+        }
+        map_data['features'].append(feature)
+    
+    # 添加配置信息
+    center_lat, center_lon = 24.9937, 121.2988 # Default
+    if not valid_gdf.empty and not valid_gdf[valid_gdf.geometry.is_valid].empty: # Check for valid geometries before centroid calculation
+        valid_centroids_gdf = valid_gdf[valid_gdf.geometry.is_valid]
+        center_lat = float(valid_centroids_gdf.geometry.centroid.y.mean())
+        center_lon = float(valid_centroids_gdf.geometry.centroid.x.mean())
+
+    map_config_output = {
+        'title': '桃園市行政區發展潛力分級地圖',
+        'subtitle': '基於3級Jenks自然斷點分析',
+        'score_range': [float(round(s, 1)) for s in config['score_range']],
+        'total_districts': len(map_data['features']),
+        'center': {
+            'lat': center_lat,
+            'lng': center_lon
+        },
+        'zoom_level': 10 # Adjusted zoom
+    }
+    
+    output_data = {
+        'config': map_config_output,
+        'geojson': map_data
+    }
+    
+    os.makedirs('docs/data', exist_ok=True)
+    output_path = 'docs/data/map_data.json'
+    with open(output_path, 'w', encoding='utf-8') as f:
+        json.dump(output_data, f, ensure_ascii=False, indent=2)
+    
+    print(f"✅ 網頁地圖數據 (GeoJSON) 已保存: {output_path}")
+    return output_data
+
+def generate_map_statistics(merged_gdf, config):
+    """生成地圖統計數據 (e.g., F-statistic for Jenks breaks goodness of fit)"""
+    if merged_gdf is None or merged_gdf[pd.notna(merged_gdf['綜合分數'])].empty:
+        print("❌ 無法生成地圖統計：數據不完整或無評分數據。")
+        # Create a dummy stats file if needed by other parts, or handle this case upstream
+        stats_output = {
+            'f_statistic': 'N/A', 'p_value': 'N/A', 'effect_size': 'N/A',
+            'level_statistics': {}, 'total_districts': 0,
+            'score_distribution': {'mean': 'N/A', 'std': 'N/A', 'min': 'N/A', 'max': 'N/A'}
+        }
+        os.makedirs('docs/data', exist_ok=True)
+        output_path = 'docs/data/map_statistics.json'
+        with open(output_path, 'w', encoding='utf-8') as f:
+            json.dump(stats_output, f, ensure_ascii=False, indent=2)
+        print(f"⚠️  生成了包含 N/A 值的統計數據文件: {output_path}")
+        return stats_output
+
+    print("📈 生成地圖相關統計數據 (F-statistic, etc.)...")
+    
+    # Filter for rows with scores for statistical analysis
+    scored_gdf = merged_gdf.dropna(subset=['綜合分數', '3級Jenks分級'])
+    if len(scored_gdf) < 3 or scored_gdf['3級Jenks分級'].nunique() < 2 : # Need at least 2 groups for ANOVA
+        print(f"⚠️ 分數數據不足 ({len(scored_gdf)} 筆) 或少於2個潛力等級 ({scored_gdf['3級Jenks分級'].nunique()} 個) 無法計算F統計量。")
+        f_stat_val, p_value_val, eta_squared_val = 'N/A', 'N/A', 'N/A'
+    else:
+        high_scores = scored_gdf[scored_gdf['3級Jenks分級'] == '高潛力']['綜合分數'].values
+        medium_scores = scored_gdf[scored_gdf['3級Jenks分級'] == '中潛力']['綜合分數'].values
+        low_scores = scored_gdf[scored_gdf['3級Jenks分級'] == '低潛力']['綜合分數'].values
+        
+        # Ensure there are at least two groups with data to compare
+        groups_for_anova = [g for g in [high_scores, medium_scores, low_scores] if len(g) > 0]
+        if len(groups_for_anova) >= 2:
+            f_stat_val, p_value_val = stats.f_oneway(*groups_for_anova) # Use only groups with data
+            f_stat_val = float(round(f_stat_val, 3))
+            p_value_val = float(round(p_value_val, 6))
+
+            # Calculate eta squared (effect size)
+            all_scores = scored_gdf['綜合分數'].values
+            ss_total = np.sum((all_scores - np.mean(all_scores))**2)
+            
+            ss_between = 0
+            for group_scores in groups_for_anova:
+                ss_between += len(group_scores) * (np.mean(group_scores) - np.mean(all_scores))**2
+            
+            eta_squared_val = (ss_between / ss_total) if ss_total > 0 else 0
+            eta_squared_val = float(round(eta_squared_val, 3))
+        else:
+            print(f"⚠️ 少於2個有效數據組 ({len(groups_for_anova)} 組) 無法計算F統計量。")
+            f_stat_val, p_value_val, eta_squared_val = 'N/A', 'N/A', 'N/A'
+
+    level_stats_output = {}
+    for level in ['高潛力', '中潛力', '低潛力']:
+        subset = scored_gdf[scored_gdf['3級Jenks分級'] == level]
+        if not subset.empty:
+            level_stats_output[level] = {
+                'count': len(subset),
+                'districts': subset['區域別'].tolist(),
+                'avg_score': float(round(subset['綜合分數'].mean(), 2)),
+                'score_range': [
+                    float(round(subset['綜合分數'].min(), 2)),
+                    float(round(subset['綜合分數'].max(), 2))
+                ]
+            }
+        else: # Ensure all levels are present in output even if empty
+            level_stats_output[level] = {
+                'count': 0, 'districts': [], 'avg_score': 'N/A', 'score_range': ['N/A', 'N/A']
+            }
+            
+    statistics_output = {
+        'f_statistic': f_stat_val,
+        'p_value': p_value_val,
+        'effect_size': eta_squared_val,
+        'level_statistics': level_stats_output,
+        'total_districts': len(scored_gdf), # Count of districts with scores used for stats
+        'score_distribution': {
+            'mean': float(round(scored_gdf['綜合分數'].mean(), 2)) if not scored_gdf.empty else 'N/A',
+            'std': float(round(scored_gdf['綜合分數'].std(), 2)) if not scored_gdf.empty else 'N/A',
+            'min': float(round(scored_gdf['綜合分數'].min(), 2)) if not scored_gdf.empty else 'N/A',
+            'max': float(round(scored_gdf['綜合分數'].max(), 2)) if not scored_gdf.empty else 'N/A'
+        }
+    }
+    
+    os.makedirs('docs/data', exist_ok=True)
+    output_path_stats = 'docs/data/map_statistics.json' # This file is used by index.html's load_statistics.js
+    with open(output_path_stats, 'w', encoding='utf-8') as f:
+        json.dump(statistics_output, f, ensure_ascii=False, indent=2)
+    
+    print(f"✅ 地圖統計數據已保存: {output_path_stats}")
+    if f_stat_val != 'N/A':
+        print(f"   F統計量: {statistics_output['f_statistic']}")
+        print(f"   效應大小: {statistics_output['effect_size']}")
+    
+    return statistics_output
+
+# End of Map generation functions
+
 def generate_web_data():
     """生成網頁所需的所有數據"""
     print("🌐 生成網頁DASHBOARD數據")
@@ -249,6 +676,18 @@ def generate_web_data():
     scatter_data = create_scatter_chart_data(results_df)
     importance_data = create_feature_importance_data(config)
     method_info = create_method_info(config)
+    
+    # 🗺️ 生成地圖相關數據
+    print("\n🗺️ 生成地圖可視化數據...")
+    gdf = load_map_data()
+    if gdf is not None:
+        merged_gdf = merge_geodata_with_results(gdf, results_df)
+        if merged_gdf is not None:
+            # 生成各種地圖輸出
+            create_static_map(merged_gdf, config)
+            create_interactive_map(merged_gdf, config) 
+            create_map_data_for_web(merged_gdf, config)
+            generate_map_statistics(merged_gdf, config)
     
     # 生成主數據文件
     dashboard_data = {
@@ -418,7 +857,6 @@ def update_html_for_jenks():
             <p style="text-align:center; font-size:14px; margin-top:10px; color: #555;">
                 <em>在地圖上探索各行政區的詳細評估結果。可拖曳、縮放，並點擊區域查看更多資訊。<br>
                 <a href="map_interactive.html" target="_blank" style="color: #007bff; text-decoration: none;">點此在新分頁中開啟全螢幕互動式地圖</a>
-                或查看 <a href="map.html" target="_blank" style="color: #007bff; text-decoration: none;">靜態地圖與詳細統計頁面</a>。
                 </em>
             </p>
         </section>
@@ -496,6 +934,7 @@ def update_html_for_jenks():
 
     <script src="js/jenks_data.js"></script>
     <script src="js/jenks_dashboard.js"></script>
+    <script src="js/load_statistics.js"></script>
 </body>
 </html>"""
     
