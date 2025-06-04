@@ -3,9 +3,9 @@
     "name": "桃園市行政區發展特徵資料",
     "description": "桃園市13個行政區的人口、商業、所得、地理、公共建設、醫療等特徵資料",
     "year": 110,
-    "last_updated": "2025-06-03 21:50:22",
+    "last_updated": "2025-06-04 14:24:43",
     "total_districts": 13,
-    "total_features": 13
+    "total_features": 12
   },
   "districts": [
     "中壢區",
@@ -24,7 +24,7 @@
   ],
   "data_sources": {
     "人口": "2 個特徵",
-    "商業": "5 個特徵",
+    "商業": "4 個特徵",
     "所得": "2 個特徵",
     "地理": "1 個特徵",
     "醫療": "3 個特徵"
@@ -82,15 +82,6 @@
       "min_value": 242.0,
       "max_value": 12107.0,
       "mean_value": 4058.6923076923076,
-      "missing_count": 0
-    },
-    "商業_avg_capital_per_company": {
-      "source": "商業",
-      "indicator": "avg_capital_per_company",
-      "data_type": "float64",
-      "min_value": 108270.89552238806,
-      "max_value": 247314.45717660958,
-      "mean_value": 222501.60021263786,
       "missing_count": 0
     },
     "所得_median_household_income": {

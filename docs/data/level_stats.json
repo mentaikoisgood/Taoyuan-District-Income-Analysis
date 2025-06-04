@@ -1,0 +1,52 @@
+{
+  "high_potential": {
+    "count": 4,
+    "districts": [
+      "桃園區",
+      "龜山區",
+      "中壢區",
+      "蘆竹區"
+    ],
+    "scores": [
+      10.0,
+      9.4,
+      7.3,
+      7.1
+    ],
+    "avg_score": 8.5
+  },
+  "medium_potential": {
+    "count": 5,
+    "districts": [
+      "楊梅區",
+      "平鎮區",
+      "龍潭區",
+      "大園區",
+      "八德區"
+    ],
+    "scores": [
+      4.8,
+      4.7,
+      4.6,
+      4.4,
+      3.6
+    ],
+    "avg_score": 4.4
+  },
+  "low_potential": {
+    "count": 4,
+    "districts": [
+      "觀音區",
+      "大溪區",
+      "復興區",
+      "新屋區"
+    ],
+    "scores": [
+      2.3,
+      1.2,
+      1.1,
+      0.0
+    ],
+    "avg_score": 1.1
+  }
+}

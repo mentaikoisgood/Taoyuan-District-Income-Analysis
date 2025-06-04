@@ -1,0 +1,41 @@
+{
+  "method": "3級Jenks自然斷點",
+  "breaks": [
+    0.0,
+    2.253058709956644,
+    4.806718750646226,
+    10.0
+  ],
+  "feature_properties": {
+    "人口_working_age_ratio": {
+      "direction": "positive",
+      "weight": 0.15,
+      "description": "工作年齡人口比例"
+    },
+    "商業_hhi_index": {
+      "direction": "negative",
+      "weight": 0.1,
+      "description": "商業集中度 (轉分散度)"
+    },
+    "所得_median_household_income": {
+      "direction": "positive",
+      "weight": 0.4,
+      "description": "家戶中位數所得"
+    },
+    "tertiary_industry_ratio": {
+      "direction": "positive",
+      "weight": 0.05,
+      "description": "服務業比例"
+    },
+    "medical_index": {
+      "direction": "positive",
+      "weight": 0.3,
+      "description": "醫療指數"
+    }
+  },
+  "n_districts": 13,
+  "score_range": [
+    0.0,
+    10.0
+  ]
+}

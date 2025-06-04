@@ -1,0 +1,45 @@
+{
+  "title": "3級Jenks自然斷點分級",
+  "description": "使用Jenks自然斷點方法將桃園市13個行政區分為3個潛力等級",
+  "breaks": [
+    0.0,
+    2.253058709956644,
+    4.806718750646226,
+    10.0
+  ],
+  "total_districts": 13,
+  "score_range": [
+    0.0,
+    10.0
+  ],
+  "features_count": 5,
+  "advantages": [
+    "基於數據驅動的自然分割點",
+    "最大化組間差異，最小化組內差異",
+    "適合小樣本分析",
+    "穩定性優秀",
+    "政策解釋性強"
+  ],
+  "steps": [
+    {
+      "step": "STEP 1: 數據準備",
+      "description": "整合人口、商業、所得、產業、醫療等5個關鍵指標"
+    },
+    {
+      "step": "STEP 2: 特徵標準化",
+      "description": "使用Z-score標準化處理所有特徵"
+    },
+    {
+      "step": "STEP 3: 權重計算",
+      "description": "根據政策重要性設定權重 (詳細權重見選定方案)"
+    },
+    {
+      "step": "STEP 4: Jenks分級",
+      "description": "使用自然斷點方法找到最優分割點，形成3個潛力等級"
+    },
+    {
+      "step": "STEP 5: 驗證分析",
+      "description": "通過Bootstrap穩定性測試和質量指標驗證分級效果"
+    }
+  ]
+}

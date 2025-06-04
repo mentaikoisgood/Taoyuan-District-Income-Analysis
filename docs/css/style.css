@@ -65,16 +65,17 @@ body {
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
 }
 
+/* 3級Jenks分級卡片顏色 */
 .high-potential {
-    border-left: 5px solid #e74c3c;
+    border-left: 5px solid #2E8B57;
 }
 
 .medium-potential {
-    border-left: 5px solid #f39c12;
+    border-left: 5px solid #FFA500;
 }
 
 .low-potential {
-    border-left: 5px solid #3498db;
+    border-left: 5px solid #DC143C;
 }
 
 .card h3 {
@@ -205,6 +206,43 @@ tr:nth-child(even) {
 
 tr:hover {
     background: #e3f2fd;
+    cursor: pointer;
+}
+
+/* 3級Jenks分級表格行樣式 */
+.high-potential-row {
+    border-left: 4px solid #2E8B57;
+}
+
+.medium-potential-row {
+    border-left: 4px solid #FFA500;
+}
+
+.low-potential-row {
+    border-left: 4px solid #DC143C;
+}
+
+/* 級別標籤樣式 */
+.level-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: white;
+    text-align: center;
+}
+
+.level-badge.high {
+    background-color: #2E8B57;
+}
+
+.level-badge.medium {
+    background-color: #FFA500;
+}
+
+.level-badge.low {
+    background-color: #DC143C;
 }
 
 /* 洞察區域 */
@@ -235,7 +273,11 @@ tr:hover {
     background: #f8f9fa;
     border-radius: 10px;
     padding: 20px;
-    border-left: 4px solid #3498db;
+    transition: transform 0.3s ease;
+}
+
+.insight-card:hover {
+    transform: translateY(-3px);
 }
 
 .insight-card h3 {
@@ -244,8 +286,8 @@ tr:hover {
 }
 
 .insight-card ul {
-    list-style-type: none;
-    padding-left: 0;
+    list-style: none;
+    padding: 0;
 }
 
 .insight-card li {
@@ -255,7 +297,7 @@ tr:hover {
 }
 
 .insight-card li:before {
-    content: "•";
+    content: "▸";
     color: #3498db;
     font-weight: bold;
     position: absolute;
@@ -283,19 +325,19 @@ tr:hover {
 .method-steps {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
+    gap: 15px;
 }
 
 .step {
     background: #f8f9fa;
     border-radius: 10px;
     padding: 20px;
-    border-top: 4px solid #e74c3c;
+    border-left: 4px solid #3498db;
     transition: transform 0.3s ease;
 }
 
 .step:hover {
-    transform: translateY(-3px);
+    transform: translateX(5px);
 }
 
 .step h4 {
@@ -304,8 +346,9 @@ tr:hover {
 }
 
 .step p {
-    color: #5a6c7d;
     font-size: 0.9rem;
+    color: #7f8c8d;
+    line-height: 1.5;
 }
 
 /* 頁腳 */
@@ -325,11 +368,10 @@ tr:hover {
 .footer a {
     color: #3498db;
     text-decoration: none;
-    transition: color 0.3s ease;
 }
 
 .footer a:hover {
-    color: #2980b9;
+    text-decoration: underline;
 }
 
 /* 響應式設計 */
@@ -337,53 +379,59 @@ tr:hover {
     .container {
         padding: 15px;
     }
-    
+
     .header h1 {
         font-size: 2rem;
     }
-    
+
     .main-content {
         grid-template-columns: 1fr;
     }
-    
+
     .metrics-cards {
         grid-template-columns: 1fr;
     }
-    
+
     .insights-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .method-steps {
         grid-template-columns: 1fr;
     }
-    
+
     table {
         font-size: 0.8rem;
     }
 }
 
-/* 數據標籤顏色 */
+/* 舊版標籤兼容性 */
 .high-potential-label {
-    background: #e74c3c;
+    background-color: #e74c3c;
     color: white;
-    padding: 4px 8px;
-    border-radius: 4px;
+    padding: 5px 10px;
+    border-radius: 15px;
     font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-block;
 }
 
 .medium-potential-label {
-    background: #f39c12;
+    background-color: #f39c12;
     color: white;
-    padding: 4px 8px;
-    border-radius: 4px;
+    padding: 5px 10px;
+    border-radius: 15px;
     font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-block;
 }
 
 .low-potential-label {
-    background: #3498db;
+    background-color: #3498db;
     color: white;
-    padding: 4px 8px;
-    border-radius: 4px;
+    padding: 5px 10px;
+    border-radius: 15px;
     font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-block;
 } 

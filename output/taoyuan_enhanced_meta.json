@@ -1,11 +1,10 @@
 {
-  "total_features": 6,
+  "total_features": 5,
   "total_samples": 13,
   "missing_values": 0,
   "kept_features": [
     "人口_working_age_ratio",
     "商業_hhi_index",
-    "商業_avg_capital_per_company",
     "所得_median_household_income",
     "tertiary_industry_ratio",
     "medical_index"

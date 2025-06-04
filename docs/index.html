@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>桃園市行政區發展潛力分析儀表板</title>
+    <title>桃園市行政區3級Jenks分級分析儀表板</title>
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
 </head>
@@ -12,43 +12,44 @@
         <!-- 標題區域 -->
         <header class="header">
             <h1>🏙️ 桃園市行政區發展潛力分析</h1>
-            <p class="subtitle">基於Ward層次聚類與Cluster平均分數分類的13個行政區發展潛力評估</p>
+            <p class="subtitle">基於3級Jenks自然斷點的13個行政區發展潛力評估 (0-10分制)</p>
         </header>
 
         <!-- 主要指標卡片 -->
         <section class="metrics-cards">
             <div class="card high-potential">
-                <h3>高發展潛力</h3>
-                <div class="metric-value">3</div>
+                <h3>高潛力</h3>
+                <div class="metric-value" id="highCount"> 加載中... </div>
                 <div class="metric-label">個行政區</div>
-                <div class="districts-list">中壢區、桃園區、龜山區</div>
+                <div class="districts-list" id="highDistricts"> 加載中... </div>
             </div>
             <div class="card medium-potential">
-                <h3>中發展潛力</h3>
-                <div class="metric-value">9</div>
+                <h3>中潛力</h3>
+                <div class="metric-value" id="mediumCount"> 加載中... </div>
                 <div class="metric-label">個行政區</div>
-                <div class="districts-list">八德區、大園區、大溪區、平鎮區、新屋區、楊梅區、龍潭區、蘆竹區、觀音區</div>
+                <div class="districts-list" id="mediumDistricts"> 加載中... </div>
             </div>
             <div class="card low-potential">
-                <h3>低發展潛力</h3>
-                <div class="metric-value">1</div>
+                <h3>低潛力</h3>
+                <div class="metric-value" id="lowCount"> 加載中... </div>
                 <div class="metric-label">個行政區</div>
-                <div class="districts-list">復興區</div>
+                <div class="districts-list" id="lowDistricts"> 加載中... </div>
             </div>
         </section>
 
         <!-- 主要內容區域 -->
         <main class="main-content">
-            <!-- 左側：聚類視覺化 -->
+            <!-- 左側：分級散點圖 -->
             <section class="chart-section">
-                <h2>📊 聚類分析結果</h2>
+                <h2>📊 3級Jenks分級結果</h2>
                 <div class="chart-container">
-                    <canvas id="clusterChart"></canvas>
+                    <canvas id="jenksChart"></canvas>
                 </div>
                 <div class="chart-info">
-                    <p><strong>輪廓係數:</strong> 0.304 (可接受)</p>
-                    <p><strong>分析方法:</strong> Ward層次聚類 (標準化特徵)</p>
-                    <p><strong>分類方法:</strong> Cluster平均潛力分數分配</p>
+                    <p><strong>F統計量:</strong> <span id="fStatistic">加載中...</span></p>
+                    <p><strong>效應大小:</strong> <span id="effectSize">加載中...</span></p>
+                    <p><strong>分級方法:</strong> Jenks自然斷點 (3級)</p>
+                    <p><strong>分數範圍:</strong> 0-10分制</p> 
                 </div>
             </section>
 
@@ -58,19 +59,6 @@
                 <div class="radar-controls">
                     <select id="districtSelect">
                         <option value="">選擇行政區</option>
-                        <option value="中壢區">中壢區</option>
-                        <option value="八德區">八德區</option>
-                        <option value="大園區">大園區</option>
-                        <option value="大溪區">大溪區</option>
-                        <option value="平鎮區">平鎮區</option>
-                        <option value="復興區">復興區</option>
-                        <option value="桃園區">桃園區</option>
-                        <option value="新屋區">新屋區</option>
-                        <option value="楊梅區">楊梅區</option>
-                        <option value="龍潭區">龍潭區</option>
-                        <option value="龜山區">龜山區</option>
-                        <option value="蘆竹區">蘆竹區</option>
-                        <option value="觀音區">觀音區</option>
                     </select>
                 </div>
                 <div class="chart-container">
@@ -81,20 +69,20 @@
 
         <!-- 詳細數據表格 -->
         <section class="data-table-section">
-            <h2>📋 詳細數據表格</h2>
+            <h2>📋 詳細分級結果</h2>
             <div class="table-container">
                 <table id="dataTable">
                     <thead>
                         <tr>
+                            <th>排名</th>
                             <th>行政區</th>
                             <th>潛力等級</th>
-                            <th>綜合分數</th>
-                            <th>集群編號</th>
-                            <th>家庭收入中位數</th>
-                            <th>勞動年齡比例</th>
+                            <th>綜合分數 (0-10)</th>
+                            <th>工作年齡比例</th>
+                            <th>家戶中位數所得</th>
                             <th>第三產業比例</th>
                             <th>醫療指數</th>
-                            <th>分群機率</th>
+                            <th>商業集中度</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
@@ -109,30 +97,30 @@
             <h2>💡 關鍵洞察與政策建議</h2>
             <div class="insights-grid">
                 <div class="insight-card">
-                    <h3>🏢 高潛力區域 (Cluster 2)</h3>
+                    <h3>🏢 高潛力區域</h3>
                     <ul>
-                        <li>桃園核心都會區三大重點區域</li>
-                        <li>平均綜合分數 0.717</li>
-                        <li>醫療資源充足，產業發達</li>
-                        <li><strong>建議:</strong> 持續強化核心競爭力與創新產業</li>
+                        <li>桃園核心都會區重點區域</li>
+                        <li>平均綜合分數 <span id="highAvgScore">加載中...</span> 分 (0-10制)</li>
+                        <li>醫療資源充足，產業發達，所得水平高</li>
+                        <li><strong>建議:</strong> 持續強化核心競爭力與創新產業發展</li>
                     </ul>
                 </div>
                 <div class="insight-card">
-                    <h3>🌱 中潛力區域 (Cluster 0)</h3>
+                    <h3>🌱 中潛力區域</h3>
                     <ul>
-                        <li>最大的發展中區域群組，涵蓋9個行政區</li>
-                        <li>平均綜合分數 0.349</li>
-                        <li>發展程度差異較大，具成長潛力</li>
-                        <li><strong>建議:</strong> 因地制宜發展特色產業</li>
+                        <li>發展中區域群組</li>
+                        <li>平均綜合分數 <span id="mediumAvgScore">加載中...</span> 分 (0-10制)</li>
+                        <li>發展程度適中，具有成長潛力</li>
+                        <li><strong>建議:</strong> 因地制宜發展特色產業，加強基礎建設</li>
                     </ul>
                 </div>
                 <div class="insight-card">
-                    <h3>🌾 低潛力區域 (Cluster 1)</h3>
+                    <h3>🌾 低潛力區域</h3>
                     <ul>
-                        <li>偏遠山區，地理條件特殊</li>
-                        <li>綜合分數 0.266</li>
-                        <li>原住民文化豐富，觀光資源獨特</li>
-                        <li><strong>建議:</strong> 發展生態觀光與文化特色產業</li>
+                        <li>需關注區域，可能需要政策扶持</li>
+                        <li>平均綜合分數 <span id="lowAvgScore">加載中...</span> 分 (0-10制)</li>
+                        <li>發展條件相對較弱，但有特色資源</li>
+                        <li><strong>建議:</strong> 重點投入基礎建設，發展觀光與特色農業</li>
                     </ul>
                 </div>
             </div>
@@ -140,30 +128,34 @@
 
         <!-- 方法說明 -->
         <section class="methodology-section">
-            <h2>🔬 分析方法</h2>
+            <h2>🔬 Jenks自然斷點分級方法</h2>
             <div class="method-steps">
                 <div class="step">
-                    <h4>STEP 1: 數據收集</h4>
-                    <p>整合人口、商業、所得、地理、醫療等多維度數據</p>
+                    <h4>STEP 1: 數據準備</h4>
+                    <p>整合人口、商業、所得、產業、醫療等5個關鍵指標</p>
                 </div>
                 <div class="step">
-                    <h4>STEP 2: 特徵工程</h4>
-                    <p>創建5個關鍵特徵並設定權重：所得(35%)、產業(25%)、醫療(20%)、人口(15%)、商業(5%)</p>
+                    <h4>STEP 2: 特徵標準化</h4>
+                    <p>使用Z-score標準化處理所有特徵</p>
                 </div>
                 <div class="step">
-                    <h4>STEP 3: Ward聚類</h4>
-                    <p>直接對標準化特徵進行Ward層次聚類，獲得3個自然分群</p>
+                    <h4>STEP 3: 權重計算</h4>
+                    <p>依據選定方案設定各指標權重</p>
                 </div>
                 <div class="step">
-                    <h4>STEP 4: Cluster分類</h4>
-                    <p>計算各cluster平均潛力分數，按分數高低分配高/中/低潛力等級</p>
+                    <h4>STEP 4: Jenks分級</h4>
+                    <p>使用自然斷點方法找到最優分割點，最大化組間差異、最小化組內差異</p>
+                </div>
+                <div class="step">
+                    <h4>STEP 5: 驗證分析</h4>
+                    <p>通過F統計量、效應大小等指標驗證分級質量</p>
                 </div>
             </div>
         </section>
 
         <!-- 頁腳 -->
         <footer class="footer">
-            <p>&copy; 2024 桃園市行政區發展潛力分析 | 
+            <p>&copy; 2024 桃園市行政區發展潛力分析 - 3級Jenks分級 | 
                <a href="https://github.com/mentaikoisgood/Taoyuan-District-Income-Analysis" target="_blank">
                    GitHub Repository
                </a>
@@ -171,7 +163,7 @@
         </footer>
     </div>
 
-    <script src="js/data.js"></script>
-    <script src="js/dashboard.js"></script>
+    <script src="js/jenks_data.js"></script>
+    <script src="js/jenks_dashboard.js"></script>
 </body>
-</html> 
+</html>
