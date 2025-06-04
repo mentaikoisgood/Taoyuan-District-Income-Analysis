@@ -40,6 +40,7 @@ DERIVED_MED_DENSITY = 'medical_density_area'
 DERIVED_ECON_INDEX = 'economic_index'
 DERIVED_MED_INDEX = 'medical_index'
 DERIVED_AVG_FACTORY_CAP = 'avg_factory_capital'
+DERIVED_ECON_MED_RATIO = 'econ_med_ratio'
 
 def clean_numeric_data(series):
     """清理數值數據的通用函數"""
@@ -694,6 +695,13 @@ def create_all_features():
     # 確保數值類型
     print("\n🔢 確保數值類型...")
     merged_df = ensure_numeric_types(merged_df)
+
+    # 經濟醫療比
+    if DERIVED_ECON_INDEX in merged_df.columns and DERIVED_MED_INDEX in merged_df.columns:
+        with np.errstate(divide="ignore", invalid="ignore"):
+            ratio = merged_df[DERIVED_ECON_INDEX] / merged_df[DERIVED_MED_INDEX]
+            ratio.replace([np.inf, -np.inf], np.nan, inplace=True)
+        merged_df[DERIVED_ECON_MED_RATIO] = ratio
     
     # 生成metadata
     print("\n📝 生成metadata...")
@@ -857,6 +865,13 @@ def enhanced_feature_engineering():
         medical_scaled = med_scaler.fit_transform(medical_data)
         df[DERIVED_MED_INDEX] = np.mean(medical_scaled, axis=1)
         print(f"  ✅ 醫療服務指數")
+
+    # 經濟醫療比
+    if DERIVED_ECON_INDEX in df.columns and DERIVED_MED_INDEX in df.columns:
+        with np.errstate(divide="ignore", invalid="ignore"):
+            ratio = df[DERIVED_ECON_INDEX] / df[DERIVED_MED_INDEX]
+            ratio.replace([np.inf, -np.inf], np.nan, inplace=True)
+        df[DERIVED_ECON_MED_RATIO] = ratio
     
     # 處理偏態分布
     print("\n📊 處理偏態分布...")
