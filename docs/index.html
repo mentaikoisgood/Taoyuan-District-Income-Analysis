@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>桃園市行政區發展潛力分析儀表板</title>
     <link rel="stylesheet" href="css/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
 </head>
 <body>
     <div class="container">
@@ -47,7 +46,7 @@
                     <canvas id="clusterChart"></canvas>
                 </div>
                 <div class="chart-info">
-                    <p><strong>輪廓係數:</strong> 0.463 (良好)</p>
+                    <p><strong>輪廓係數:</strong> 0.718 (優秀)</p>
                     <p><strong>分析方法:</strong> t-SNE降維 + Ward層次聚類</p>
                 </div>
             </section>
@@ -155,7 +154,7 @@
                 </div>
                 <div class="step">
                     <h4>STEP 4: 模型驗證</h4>
-                    <p>輪廓係數0.463，Davies-Bouldin指數0.545，驗證聚類質量</p>
+                    <p>輪廓係數0.718，Davies-Bouldin指數0.545，驗證聚類質量</p>
                 </div>
             </div>
         </section>

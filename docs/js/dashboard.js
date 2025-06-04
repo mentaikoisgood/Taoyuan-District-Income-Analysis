@@ -15,6 +15,14 @@ function initializeCharts() {
     createRadarChart();
 }
 
+// 顏色轉換函數
+function hexToRgba(hex, alpha) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 // 創建聚類散點圖
 function createClusterChart() {
     const ctx = document.getElementById('clusterChart').getContext('2d');
@@ -157,7 +165,7 @@ function updateRadarChart(districtName) {
     
     radarChart.data.datasets[0].data = normalizedData;
     radarChart.data.datasets[0].label = `${districtName} (${data.潛力等級})`;
-    radarChart.data.datasets[0].backgroundColor = color.replace('1)', '0.2)');
+    radarChart.data.datasets[0].backgroundColor = hexToRgba(color, 0.2);
     radarChart.data.datasets[0].borderColor = color;
     radarChart.data.datasets[0].pointBackgroundColor = color;
     radarChart.data.datasets[0].pointHoverBorderColor = color;
