@@ -17,7 +17,20 @@ import json
 import os
 from sklearn.preprocessing import StandardScaler
 import warnings
+import geopandas as gpd
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import folium
+from folium import plugins
+import shapely.geometry
+from shapely.geometry import mapping
+from scipy import stats
+
 warnings.filterwarnings('ignore')
+
+# 設定中文字體
+plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'SimHei', 'Microsoft YaHei']
+plt.rcParams['axes.unicode_minus'] = False
 
 def load_classification_results():
     """載入3級Jenks分級結果"""
@@ -298,8 +311,8 @@ if (typeof module !== 'undefined' && module.exports) {{
     return dashboard_data
 
 def update_html_for_jenks():
-    """更新HTML文件以適配3級Jenks分級 (及10分制)"""
-    print("\n🔄 更新HTML文件...")
+    """更新HTML文件以適配3級Jenks分級 (及10分制) 並加入互動地圖"""
+    print("\n🔄 更新HTML文件 (docs/index.html)...")
     
     # 生成新的HTML內容 (確保繁體中文和10分制範例)
     html_content = """<!DOCTYPE html>
@@ -394,6 +407,20 @@ def update_html_for_jenks():
                     </tbody>
                 </table>
             </div>
+        </section>
+
+        <!-- Interactive Map Section -->
+        <section class="map-section content-section">
+            <h2>🗺️ 互動式發展潛力地圖</h2>
+            <div class="map-container-iframe">
+                <iframe src="map_interactive.html" width="100%" height="600px" style="border:1px solid #ddd; border-radius: 8px;" title="桃園市互動式發展潛力地圖"></iframe>
+            </div>
+            <p style="text-align:center; font-size:14px; margin-top:10px; color: #555;">
+                <em>在地圖上探索各行政區的詳細評估結果。可拖曳、縮放，並點擊區域查看更多資訊。<br>
+                <a href="map_interactive.html" target="_blank" style="color: #007bff; text-decoration: none;">點此在新分頁中開啟全螢幕互動式地圖</a>
+                或查看 <a href="map.html" target="_blank" style="color: #007bff; text-decoration: none;">靜態地圖與詳細統計頁面</a>。
+                </em>
+            </p>
         </section>
 
         <!-- 關鍵洞察 -->
@@ -500,7 +527,17 @@ def main():
         print("  - docs/data/method_info.json")
         print("  - docs/js/jenks_data.js")
         print("  - docs/index.html (已更新)")
+        # Add new map files to the list
+        print("  - output/taoyuan_potential_map.png (靜態地圖)")
+        print("  - docs/taoyuan_potential_map.png (網頁用靜態地圖)")
+        print("  - docs/map_interactive.html (互動式地圖)")
+        print("  - docs/data/map_data.json (網頁地圖 GeoJSON數據)")
+        print("  - docs/data/map_statistics.json (地圖統計數據)")
+        
         print(f"\n🚀 網頁數據已生成於 docs/ 目錄下，可用於部署至 GitHub Pages。")
+        print(f"   主儀表板: docs/index.html")
+        print(f"   互動地圖 (單獨): docs/map_interactive.html")
+        print(f"   靜態地圖與統計 (舊版 map.html 參考): docs/map.html") # Assuming map.html might still exist or be desired
         print(f"   目標網址: @https://mentaikoisgood.github.io/Taoyuan-District-Income-Analysis/")
 
 if __name__ == "__main__":
