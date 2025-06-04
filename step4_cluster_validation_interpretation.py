@@ -39,8 +39,19 @@ def load_data_and_cluster():
     # 載入特徵數據
     df = pd.read_csv('output/taoyuan_features_enhanced.csv')
     districts = df['區域別'].tolist()
-    X = df.drop('區域別', axis=1).values
-    feature_names = df.columns[1:].tolist()
+    
+    # 🔧 使用與STEP3相同的最佳特征組合
+    optimal_features = [
+        '所得_median_household_income',  # 經濟水平指標
+        'medical_index',                # 醫療服務指標
+        'tertiary_industry_ratio'       # 產業結構指標
+    ]
+    
+    X = df[optimal_features].values
+    feature_names = optimal_features
+    
+    print(f"✅ 使用最佳特征組合: {len(districts)} 個行政區, {X.shape[1]} 個特征")
+    print(f"  特征列表: {', '.join(optimal_features)}")
     
     # t-SNE降維
     tsne = TSNE(n_components=2, random_state=RANDOM_STATE, perplexity=3, max_iter=1000)
