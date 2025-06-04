@@ -12,7 +12,7 @@
         <!-- 標題區域 -->
         <header class="header">
             <h1>🏙️ 桃園市行政區發展潛力分析</h1>
-            <p class="subtitle">基於機器學習聚類分析的13個行政區發展潛力評估 (潛力綜合分數方法)</p>
+            <p class="subtitle">基於機器學習聚類分析的13個行政區發展潛力評估</p>
         </header>
 
         <!-- 主要指標卡片 -->
@@ -46,10 +46,8 @@
                     <canvas id="clusterChart"></canvas>
                 </div>
                 <div class="chart-info">
-                    <p><strong>輪廓係數:</strong> 0.717 (優秀)</p>
-                    <p><strong>語義一致性:</strong> 0.794 (優秀)</p>
-                    <p><strong>綜合評估:</strong> 0.784 (良好)</p>
-                    <p><strong>分析方法:</strong> 3核心特徵 + t-SNE降維 + Ward層次聚類</p>
+                    <p><strong>輪廓係數:</strong> 0.718 (優秀)</p>
+                    <p><strong>分析方法:</strong> t-SNE降維 + Ward層次聚類</p>
                 </div>
             </section>
 
@@ -90,7 +88,6 @@
                             <th>行政區</th>
                             <th>潛力等級</th>
                             <th>集群編號</th>
-                            <th>潛力分數</th>
                             <th>家庭收入中位數</th>
                             <th>勞動年齡比例</th>
                             <th>第三產業比例</th>
@@ -113,7 +110,6 @@
                     <h3>🏢 高潛力區域</h3>
                     <ul>
                         <li>集中在桃園核心都會區</li>
-                        <li>平均潛力分數: 0.828 (標準化)</li>
                         <li>平均家庭收入 510,750 元</li>
                         <li>第三產業發達，醫療資源充足</li>
                         <li><strong>建議:</strong> 強化創新產業聚落發展</li>
@@ -123,8 +119,7 @@
                     <h3>🌱 中潛力區域</h3>
                     <ul>
                         <li>介於都會與偏鄉之間</li>
-                        <li>平均潛力分數: -0.065 (標準化)</li>
-                        <li>平均家庭收入 456,600 元</li>
+                        <li>平均家庭收入 457,800 元</li>
                         <li>產業結構較為均衡</li>
                         <li><strong>建議:</strong> 發展特色產業與觀光</li>
                     </ul>
@@ -133,7 +128,6 @@
                     <h3>🌾 低潛力區域</h3>
                     <ul>
                         <li>偏向農業與傳統產業</li>
-                        <li>平均潛力分數: -0.748 (標準化)</li>
                         <li>平均家庭收入 411,750 元</li>
                         <li>醫療資源相對不足</li>
                         <li><strong>建議:</strong> 加強基礎建設與社會服務</li>
@@ -156,11 +150,11 @@
                 </div>
                 <div class="step">
                     <h4>STEP 3: 聚類分析</h4>
-                    <p>使用t-SNE降維+Ward層次聚類，基於潛力綜合分數(z-score標準化)+多數決分配標籤</p>
+                    <p>使用t-SNE降維+Ward層次聚類，基於所得水平分配潛力等級</p>
                 </div>
                 <div class="step">
                     <h4>STEP 4: 模型驗證</h4>
-                    <p>輪廓係數0.717，語義一致性0.794，驗證聚類質量優秀</p>
+                    <p>輪廓係數0.718，Davies-Bouldin指數0.545，驗證聚類質量</p>
                 </div>
             </div>
         </section>

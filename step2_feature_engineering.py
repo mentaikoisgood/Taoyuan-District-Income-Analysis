@@ -277,9 +277,9 @@ def create_commercial_features(raw_commercial_data):
         
         for col in raw_commercial_data.columns:
             if col not in exclude_cols:
-                    industry_counts[col] = clean_numeric_data(pd.Series([count_row[col]])).iloc[0]
-                    industry_capitals[col] = clean_numeric_data(pd.Series([capital_row[col]])).iloc[0]
-        
+                industry_counts[col] = clean_numeric_data(pd.Series([count_row[col]])).iloc[0]
+                industry_capitals[col] = clean_numeric_data(pd.Series([capital_row[col]])).iloc[0]
+            
         # 計算總家數和總資本額
         total_count = sum(industry_counts.values())
         total_capital = sum(industry_capitals.values())

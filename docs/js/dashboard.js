@@ -77,7 +77,6 @@ function createClusterChart() {
                             const data = getDistrictData(district);
                             return [
                                 `潛力等級: ${data.潛力等級}`,
-                                `潛力分數: ${data.潛力分數.toFixed(3)}`,
                                 `家庭收入: ${data.家庭收入中位數.toLocaleString()}元`,
                                 `分群機率: ${(data.分群機率 * 100).toFixed(1)}%`
                             ];
@@ -165,7 +164,7 @@ function updateRadarChart(districtName) {
     else if (data.潛力等級 === '中潛力') color = '#f39c12';
     
     radarChart.data.datasets[0].data = normalizedData;
-    radarChart.data.datasets[0].label = `${districtName} (${data.潛力等級}, 分數: ${data.潛力分數.toFixed(3)})`;
+    radarChart.data.datasets[0].label = `${districtName} (${data.潛力等級})`;
     radarChart.data.datasets[0].backgroundColor = hexToRgba(color, 0.2);
     radarChart.data.datasets[0].borderColor = color;
     radarChart.data.datasets[0].pointBackgroundColor = color;
@@ -194,7 +193,6 @@ function populateDataTable() {
             <td>${district}</td>
             <td><span class="${levelClass}">${data.潛力等級}</span></td>
             <td>${data.集群編號}</td>
-            <td>${data.潛力分數.toFixed(3)}</td>
             <td>${data.家庭收入中位數.toLocaleString()}</td>
             <td>${data.勞動年齡比例.toFixed(1)}%</td>
             <td>${data.第三產業比例.toFixed(1)}%</td>
