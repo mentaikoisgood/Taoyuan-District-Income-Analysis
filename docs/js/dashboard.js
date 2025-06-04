@@ -77,6 +77,7 @@ function createClusterChart() {
                             const data = getDistrictData(district);
                             return [
                                 `潛力等級: ${data.潛力等級}`,
+                                `綜合分數: ${data.綜合分數.toFixed(3)}`,
                                 `家庭收入: ${data.家庭收入中位數.toLocaleString()}元`,
                                 `分群機率: ${(data.分群機率 * 100).toFixed(1)}%`
                             ];
@@ -178,9 +179,16 @@ function populateDataTable() {
     const tbody = document.getElementById('tableBody');
     const districts = getAllDistricts();
     
+    // 按綜合分數排序（降序）
+    const sortedDistricts = districts.sort((a, b) => {
+        const scoreA = getDistrictData(a).綜合分數;
+        const scoreB = getDistrictData(b).綜合分數;
+        return scoreB - scoreA;
+    });
+    
     tbody.innerHTML = '';
     
-    districts.forEach(district => {
+    sortedDistricts.forEach(district => {
         const data = getDistrictData(district);
         const row = document.createElement('tr');
         
@@ -192,6 +200,7 @@ function populateDataTable() {
         row.innerHTML = `
             <td>${district}</td>
             <td><span class="${levelClass}">${data.潛力等級}</span></td>
+            <td>${data.綜合分數.toFixed(3)}</td>
             <td>${data.集群編號}</td>
             <td>${data.家庭收入中位數.toLocaleString()}</td>
             <td>${data.勞動年齡比例.toFixed(1)}%</td>

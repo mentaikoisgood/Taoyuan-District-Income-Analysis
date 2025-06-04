@@ -2,6 +2,7 @@
 桃園市行政區分群及標籤
 
 使用t-SNE降維和Ward層次聚類進行分群
+使用Jenks Natural Breaks進行潛力等級分類
 輪廓係數>0.7且分群數=3
 
 輸出:
@@ -21,6 +22,7 @@ from sklearn.metrics import silhouette_score
 import matplotlib
 from sklearn.metrics import pairwise_distances
 from sklearn.preprocessing import StandardScaler
+import jenkspy
 
 # 忽略警告
 warnings.filterwarnings('ignore')
@@ -49,6 +51,89 @@ def load_data():
     print(f"  特徵列表: {', '.join(df.columns[1:])}")
     
     return X, districts, df.columns[1:].tolist()
+
+def calculate_composite_score(districts):
+    """計算綜合發展潛力分數"""
+    print("\n📊 計算綜合發展潛力分數...")
+    
+    # 載入特徵數據
+    df = pd.read_csv('output/taoyuan_features_enhanced.csv')
+    df = df.set_index('區域別')
+    
+    # 特徵權重設定（基於領域知識）
+    weights = {
+        '所得_median_household_income': 0.35,      # 經濟水平 - 最重要
+        'tertiary_industry_ratio': 0.25,          # 產業結構 
+        'medical_index': 0.20,                    # 醫療資源
+        '人口_working_age_ratio': 0.15,           # 人力資源
+        '商業_hhi_index': 0.05                    # 商業集中度
+    }
+    
+    print(f"  特徵權重設定: {weights}")
+    
+    # 標準化數據
+    normalized_data = df.copy()
+    for feature in weights.keys():
+        if feature in df.columns:
+            min_val = df[feature].min()
+            max_val = df[feature].max()
+            normalized_data[feature] = (df[feature] - min_val) / (max_val - min_val)
+    
+    # 計算加權綜合分數
+    composite_scores = {}
+    for district in districts:
+        score = 0
+        for feature, weight in weights.items():
+            if feature in normalized_data.columns:
+                score += normalized_data.loc[district, feature] * weight
+        composite_scores[district] = score
+    
+    print(f"✅ 綜合分數計算完成")
+    for district, score in sorted(composite_scores.items(), key=lambda x: x[1], reverse=True):
+        print(f"  {district}: {score:.3f}")
+    
+    return composite_scores
+
+def apply_jenks_classification(composite_scores):
+    """使用Jenks Natural Breaks進行潛力等級分類"""
+    print("\n🎯 使用Jenks Natural Breaks進行潛力等級分類...")
+    
+    # 提取分數數組
+    scores = list(composite_scores.values())
+    
+    # 使用Jenks Natural Breaks進行3類分組
+    breaks = jenkspy.jenks_breaks(scores, n_classes=3)
+    
+    print(f"  Jenks分組邊界: {[f'{b:.3f}' for b in breaks]}")
+    
+    # 分配潛力等級
+    potential_levels = {}
+    for district, score in composite_scores.items():
+        if score >= breaks[2]:  # 最高組
+            level = '高潛力'
+        elif score >= breaks[1]:  # 中間組
+            level = '中潛力'
+        else:  # 最低組
+            level = '低潛力'
+        potential_levels[district] = level
+    
+    # 統計各等級
+    level_counts = {}
+    level_scores = {'高潛力': [], '中潛力': [], '低潛力': []}
+    
+    for district, level in potential_levels.items():
+        level_counts[level] = level_counts.get(level, 0) + 1
+        level_scores[level].append(composite_scores[district])
+    
+    print(f"✅ Jenks分類結果:")
+    for level in ['高潛力', '中潛力', '低潛力']:
+        count = level_counts.get(level, 0)
+        avg_score = np.mean(level_scores[level]) if level_scores[level] else 0
+        districts_in_level = [d for d, l in potential_levels.items() if l == level]
+        print(f"  {level}: {count}個行政區, 平均分數={avg_score:.3f}")
+        print(f"    行政區: {', '.join(districts_in_level)}")
+    
+    return potential_levels, breaks
 
 def perform_clustering(X, districts):
     """執行t-SNE降維和Ward層次聚類"""
@@ -105,41 +190,27 @@ def perform_clustering(X, districts):
         cluster_districts = [districts[i] for i in range(len(districts)) if cluster_labels[i] == cluster_id]
         print(f"  集群 {cluster_id}: {len(cluster_districts)} 個行政區 - {', '.join(cluster_districts)}")
     
-    # 🔧 修正：基於所得水平進行潛力等級映射
-    # 載入特徵數據以獲取所得信息
-    df = pd.read_csv('output/taoyuan_features_enhanced.csv')
-    income_data = df.set_index('區域別')['所得_median_household_income'].to_dict()
-    
-    # 計算各集群的平均所得
-    cluster_incomes = []
-    for cluster_id in range(3):
-        cluster_mask = cluster_labels == cluster_id
-        cluster_districts_list = [districts[i] for i in range(len(districts)) if cluster_mask[i]]
-        cluster_income = np.mean([income_data[district] for district in cluster_districts_list])
-        cluster_incomes.append(cluster_income)
-        print(f"  集群 {cluster_id} 平均所得: {cluster_income:,.0f} 元")
-    
-    # 按平均所得排序（降序：高所得=高潛力）
-    cluster_order = np.argsort(cluster_incomes)[::-1]  # 降序排列
-    potential_mapping = {
-        cluster_order[0]: '高潛力',
-        cluster_order[1]: '中潛力',
-        cluster_order[2]: '低潛力'
-    }
-    
-    print(f"✅ 基於所得的潛力等級映射: {potential_mapping}")
-    print(f"  各集群平均所得排序: {[f'{cluster_incomes[i]:,.0f}元' for i in cluster_order]}")
+    # 🆕 使用Jenks Natural Breaks進行潛力等級分類
+    composite_scores = calculate_composite_score(districts)
+    potential_levels, jenks_breaks = apply_jenks_classification(composite_scores)
     
     # 創建結果DataFrame
     results_df = pd.DataFrame({
         '行政區': districts,
         '集群編號': cluster_labels,
-        '潛力等級': [potential_mapping[label] for label in cluster_labels],
+        '潛力等級': [potential_levels[district] for district in districts],
+        '綜合分數': [composite_scores[district] for district in districts],
         'tsne_x': X_tsne[:, 0],
         'tsne_y': X_tsne[:, 1],
         '分群機率': max_probas,
         '不確定度': uncertainties
     })
+    
+    # 輸出Jenks邊界信息
+    print(f"\n📈 Jenks Natural Breaks 邊界:")
+    print(f"  高潛力閾值: ≥ {jenks_breaks[2]:.3f}")
+    print(f"  中潛力閾值: {jenks_breaks[1]:.3f} - {jenks_breaks[2]:.3f}")
+    print(f"  低潛力閾值: < {jenks_breaks[1]:.3f}")
     
     return results_df, X_tsne, cluster_labels
 
@@ -165,9 +236,10 @@ def create_visualization(results_df, X_tsne):
     level_colors = {'高潛力': 'red', '中潛力': 'orange', '低潛力': 'blue'}
     
     # 創建畫布
-    plt.figure(figsize=(10, 8))
+    plt.figure(figsize=(12, 8))
     
-    # 繪製散點圖
+    # 子圖1: t-SNE聚類結果
+    plt.subplot(1, 2, 1)
     for level in ['高潛力', '中潛力', '低潛力']:
         level_data = results_df[results_df['潛力等級'] == level]
         if len(level_data) > 0:
@@ -186,17 +258,36 @@ def create_visualization(results_df, X_tsne):
             (row['tsne_x'], row['tsne_y']),
             xytext=(5, 5),
             textcoords='offset points',
-            fontsize=10,
+            fontsize=8,
             ha='left'
         )
     
-    # 添加標題和圖例
-    plt.title('桃園市行政區分群結果 (t-SNE降維)', fontsize=14, fontweight='bold')
+    plt.title('t-SNE聚類結果 + Jenks分類', fontsize=12, fontweight='bold')
     plt.legend(fontsize=10)
+    plt.grid(True, alpha=0.3)
+    
+    # 子圖2: 綜合分數分布
+    plt.subplot(1, 2, 2)
+    scores_by_level = {}
+    for level in ['高潛力', '中潛力', '低潛力']:
+        level_data = results_df[results_df['潛力等級'] == level]
+        scores_by_level[level] = level_data['綜合分數'].values
+        
+        plt.hist(level_data['綜合分數'], 
+                alpha=0.7, 
+                color=level_colors[level], 
+                label=level,
+                bins=5)
+    
+    plt.title('綜合分數分布 (Jenks Natural Breaks)', fontsize=12, fontweight='bold')
+    plt.xlabel('綜合發展潛力分數')
+    plt.ylabel('行政區數量')
+    plt.legend()
     plt.grid(True, alpha=0.3)
     
     # 保存圖片
     viz_path = os.path.join(OUTPUT_DIR, 'clustering_visualization.png')
+    plt.tight_layout()
     plt.savefig(viz_path, dpi=300, bbox_inches='tight')
     plt.close()
     print(f"✅ 分群視覺化已保存: {viz_path}")
@@ -206,7 +297,7 @@ def create_visualization(results_df, X_tsne):
 def main():
     """主函數"""
     print("="*60)
-    print("🚀 桃園市行政區分群及標籤")
+    print("🚀 桃園市行政區分群及標籤 (Jenks Natural Breaks)")
     print("="*60)
     
     # 1. 載入數據
