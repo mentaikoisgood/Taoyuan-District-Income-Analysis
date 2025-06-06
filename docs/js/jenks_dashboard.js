@@ -269,8 +269,8 @@ function initializeScatterChart() {
         data: groupedData[levelKey],
         backgroundColor: levelColors[levelKey],
         borderColor: levelColors[levelKey],
-        pointRadius: 2,
-        pointHoverRadius: 4,
+        pointRadius: 6,
+        pointHoverRadius: 8,
         pointBorderWidth: 0, // 移除邊框
         showLine: false // 確保不顯示連線
     }));
