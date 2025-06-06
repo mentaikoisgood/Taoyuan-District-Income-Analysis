@@ -838,7 +838,7 @@ def enhanced_feature_engineering():
     # 創建綜合指數
     print("\n🎯 創建綜合指數...")
     
-    from sklearn.preprocessing import StandardScaler, MinMaxScaler
+    from sklearn.preprocessing import StandardScaler
     
     # 經濟發展指數
     economic_cols = [col for col in [COM_TOTAL_CNT, COM_TOTAL_CAP] if col in df.columns]
@@ -849,14 +849,24 @@ def enhanced_feature_engineering():
         df[DERIVED_ECON_INDEX] = np.mean(economic_scaled, axis=1)
         print(f"  ✅ 經濟發展指數")
     
-    # 醫療服務指數
+    # 🆕 醫療服務子指標 - 方案A: 保持原始數據到STEP3
     medical_cols = [col for col in [DERIVED_BEDS_PER_1K, DERIVED_STAFF_PER_1K, DERIVED_MED_DENSITY] if col in df.columns]
     if len(medical_cols) >= 3:
-        medical_data = df[medical_cols].fillna(0)
-        med_scaler = MinMaxScaler()
-        medical_scaled = med_scaler.fit_transform(medical_data)
-        df[DERIVED_MED_INDEX] = np.mean(medical_scaled, axis=1)
-        print(f"  ✅ 醫療服務指數")
+        print(f"  📊 醫療子指標數量: {len(medical_cols)}")
+        
+        # 🔄 方案A: 保留原始醫療子指標，不進行標準化
+        # 重命名為更簡潔的名稱，供STEP3使用
+        df['medical_beds_per_1k'] = df[DERIVED_BEDS_PER_1K]
+        df['medical_staff_per_1k'] = df[DERIVED_STAFF_PER_1K] 
+        df['medical_facility_density'] = df[DERIVED_MED_DENSITY]
+        
+        print(f"  ✅ 保留醫療子指標原始數據 (方案A統一Z-score策略)")
+        print(f"    醫療床位密度範圍: {df['medical_beds_per_1k'].min():.2f} - {df['medical_beds_per_1k'].max():.2f}")
+        print(f"    醫療人員密度範圍: {df['medical_staff_per_1k'].min():.2f} - {df['medical_staff_per_1k'].max():.2f}")
+        print(f"    醫療設施密度範圍: {df['medical_facility_density'].min():.4f} - {df['medical_facility_density'].max():.4f}")
+        print(f"    ⚡ 這些指標將在STEP3進行統一Z-score標準化")
+    else:
+        print(f"  ⚠️  醫療子指標不足，跳過醫療指標保留")
     
     # 處理偏態分布
     print("\n📊 處理偏態分布...")
@@ -894,6 +904,8 @@ def enhanced_feature_engineering():
         DERIVED_ECON_INDEX, DERIVED_CAP_PER_HOUSEHOLD, DERIVED_BEDS_PER_1K, 
         DERIVED_STAFF_PER_1K, DERIVED_MED_DENSITY
     ]
+    # 🔄 方案A: 保留醫療子指標，不刪除
+    # medical_beds_per_1k, medical_staff_per_1k, medical_facility_density 將保留
     
     existing_drop_features = [col for col in features_to_drop if col in df.columns]
     df = df.drop(columns=existing_drop_features)

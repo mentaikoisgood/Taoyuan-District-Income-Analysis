@@ -2,8 +2,8 @@
   "method": "3級Jenks自然斷點",
   "breaks": [
     0.0,
-    2.253058709956644,
-    4.806718750646226,
+    2.532349669795402,
+    5.1155494769381,
     10.0
   ],
   "feature_properties": {
@@ -27,10 +27,20 @@
       "weight": 0.05,
       "description": "服務業比例"
     },
-    "medical_index": {
+    "medical_beds_per_1k": {
       "direction": "positive",
-      "weight": 0.3,
-      "description": "醫療指數"
+      "weight": 0.1,
+      "description": "每千人病床數"
+    },
+    "medical_staff_per_1k": {
+      "direction": "positive",
+      "weight": 0.1,
+      "description": "每千人醫療人員"
+    },
+    "medical_facility_density": {
+      "direction": "positive",
+      "weight": 0.1,
+      "description": "醫療設施密度"
     }
   },
   "n_districts": 13,

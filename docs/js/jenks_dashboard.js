@@ -269,8 +269,8 @@ function initializeScatterChart() {
         data: groupedData[levelKey],
         backgroundColor: levelColors[levelKey],
         borderColor: levelColors[levelKey],
-        pointRadius: 5,
-        pointHoverRadius: 7,
+        pointRadius: 4,
+        pointHoverRadius: 6,
         pointBorderWidth: 0, // 移除邊框
         showLine: false // 確保不顯示連線
     }));
@@ -336,7 +336,7 @@ function initializeScatterChart() {
                     backgroundColor: 'transparent',  // 去掉背景框
                     borderWidth: 0,                  // 去掉邊框
                     font: {
-                        size: 12,                    // 進一步縮小字體大小
+                        size: 11,                    // 進一步縮小字體大小
                         weight: '600'
                     },
                     formatter: function(value, context) {

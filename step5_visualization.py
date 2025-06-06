@@ -26,6 +26,7 @@ import shapely.geometry
 from shapely.geometry import mapping
 from scipy import stats
 import matplotlib.font_manager as fm
+import matplotlib.patheffects as path_effects
 
 warnings.filterwarnings('ignore')
 
@@ -225,7 +226,7 @@ def create_method_info(config):
             },
             {
                 'step': 'STEP 5: 驗證分析',
-                'description': '通過Bootstrap穩定性測試和質量指標驗證分級效果'
+                'description': '通過統計指標和質量指標驗證分級效果'
             }
         ]
     }
@@ -251,115 +252,119 @@ def load_map_data():
         return None
 
 def merge_geodata_with_results(gdf, results_df):
-    """合併地理數據與分級結果"""
+    """將地理數據與分級結果合併"""
     print("🔗 合併地理數據與分級結果...")
     
-    if gdf is None or results_df is None:
-        print("❌ 地理數據或分級結果未載入，無法合併。")
-        return None
+    # 修正 GeoDataFrame 中的欄位名稱不一致問題
+    if '名稱' in gdf.columns and '區域別' not in gdf.columns:
+        gdf = gdf.rename(columns={'名稱': '區域別'})
 
-    # 標準化區域名稱（移除可能的空格和特殊字符）
-    gdf['區域別_clean'] = gdf['名稱'].str.strip().str.replace('桃園市', '').str.replace('區', '')
-    results_df['區域別_clean'] = results_df['區域別'].str.strip().str.replace('桃園市', '').str.replace('區', '')
+    # 確保 '區域別' 欄位存在
+    if '區域別' not in gdf.columns or '區域別' not in results_df.columns:
+        print("❌ '區域別' 欄位在其中一個數據源中不存在")
+        return None
+        
+    merged_gdf = gdf.merge(results_df, on='區域別', how='left')
     
-    # 合併數據
-    merged_gdf = gdf.merge(
-        results_df, 
-        left_on='區域別_clean', 
-        right_on='區域別_clean', 
-        how='left'
-    )
+    if merged_gdf['3級Jenks分級'].isnull().any():
+        print("⚠️ 警告: 部分行政區沒有匹配的分級結果")
     
-    # 檢查合併結果
+    # 動態添加顏色列
+    color_map = {
+        '高潛力': '#EB7062',
+        '中潛力': '#F5B041',
+        '低潛力': '#5CACE2'
+    }
+    merged_gdf['color'] = merged_gdf['3級Jenks分級'].map(color_map).fillna('#cccccc') # 未匹配的為灰色
+
     print(f"✅ 成功合併 {len(merged_gdf)} 個行政區")
-    
-    # 檢查是否有未匹配的區域
-    unmatched = merged_gdf[merged_gdf['綜合分數'].isna()]
-    if len(unmatched) > 0:
-        print(f"⚠️  未匹配的區域 (地理數據中存在，但分級結果中缺失): {unmatched['名稱'].tolist()}")
-    
     return merged_gdf
 
 def create_static_map(merged_gdf, config):
-    """創建靜態地圖"""
-    if merged_gdf is None or config is None:
-        print("❌ 無法創建靜態地圖：數據不完整。")
-        return None
-    print("🗺️ 創建靜態潛力分級地圖...")
+    """生成靜態PNG格式的地圖"""
+    print("🗺️  生成靜態PNG地圖...")
     
-    # 設定顏色映射
-    color_map = {
-        '高潛力': '#eb7062',      # 紅色 (Red)
-        '中潛力': '#f5b041',      # 橙色 (Orange)  
-        '低潛力': '#5cace2',      # 藍色 (Blue)
+    # 創建畫布
+    fig, ax = plt.subplots(1, 1, figsize=(16, 12))
+    ax.set_aspect('equal')
+    
+    # 配色方案
+    colors = {
+        '高潛力': '#EB7062', 
+        '中潛力': '#F5B041', 
+        '低潛力': '#5CACE2'
     }
     
-    # 創建圖形
-    fig, ax = plt.subplots(1, 1, figsize=(15, 12))
-    
-    # 繪製行政區邊界和填色
-    for level in ['高潛力', '中潛力', '低潛力']:
-        subset = merged_gdf[merged_gdf['3級Jenks分級'] == level]
-        if not subset.empty:
-            subset.plot(
-                ax=ax,
-                color=color_map[level],
+    # 繪製地圖
+    for _, row in merged_gdf.iterrows():
+        geom = row.geometry
+        
+        # 處理 MultiPolygon 的情況
+        if isinstance(geom, shapely.geometry.MultiPolygon):
+            for poly in geom.geoms:
+                ax.add_patch(mpatches.Polygon(
+                    np.array(poly.exterior.coords),
+                    facecolor=row['color'],
+                    edgecolor='white',
+                    linewidth=1.5,
+                    alpha=0.9,
+                    transform=ax.transData
+                ))
+        else: # 處理單一 Polygon
+            ax.add_patch(mpatches.Polygon(
+                np.array(geom.exterior.coords),
+                facecolor=row['color'],
                 edgecolor='white',
                 linewidth=1.5,
-                alpha=0.8
-            )
-    
-    # 添加區域標籤
-    for idx, row in merged_gdf.iterrows():
-        if pd.notna(row.geometry) and pd.notna(row['綜合分數']) and row.geometry.centroid:
-            centroid = row.geometry.centroid
-            label_text = f"{row['區域別']}: {row['3級Jenks分級']}"
-            ax.annotate(
-                label_text,
-                xy=(centroid.x, centroid.y),
-                ha='center',
-                va='center',
-                fontsize=10,
-                fontweight='bold',
-                color='black',
-                bbox=dict(boxstyle="round,pad=0.3", facecolor='white', alpha=0.8)
-            )
-    
-    # 設定地圖樣式
-    if not merged_gdf.empty:
-        ax.set_xlim(merged_gdf.bounds.minx.min() - 0.01, merged_gdf.bounds.maxx.max() + 0.01)
-        ax.set_ylim(merged_gdf.bounds.miny.min() - 0.01, merged_gdf.bounds.maxy.max() + 0.01)
-    ax.set_aspect('equal')
+                alpha=0.9,
+                transform=ax.transData
+            ))
+        
+    # 添加背景，移除坐標軸
+    ax.set_facecolor('#f0f2f5')
     ax.axis('off')
     
-    # 添加標題
-    plt.title('桃園市行政區發展潛力分級地圖\n基於3級Jenks自然斷點分析', 
-              fontsize=18, fontweight='bold', pad=20)
+    # 添加標籤
+    for idx, row in merged_gdf.iterrows():
+        centroid = row.geometry.centroid
+        ax.text(centroid.x, centroid.y, row['區域別'].replace('區', ''), 
+                ha='center', va='center', fontsize=14, color='white',
+                bbox=dict(facecolor='black', alpha=0.4, edgecolor='none', boxstyle='round,pad=0.4'),
+                path_effects=[path_effects.withStroke(linewidth=3, foreground='black')])
+    
+    # 添加標題和副標題
+    plt.suptitle("桃園市行政區發展潛力分級地圖", fontsize=28, fontweight='bold', color='#333333', y=0.95)
+    plt.title("基於多維度數據與3級Jenks自然斷點分析", fontsize=18, color='#666666', y=1.0)
     
     # 創建圖例
-    legend_elements = [
-        mpatches.Patch(color=color_map['高潛力'], label='高發展潛力'),
-        mpatches.Patch(color=color_map['中潛力'], label='中發展潛力'),
-        mpatches.Patch(color=color_map['低潛力'], label='低發展潛力')
-    ]
-    ax.legend(handles=legend_elements, loc='upper right', fontsize=12)
+    legend_patches = [mpatches.Patch(color=color, label=label) for label, color in colors.items()]
+    legend = plt.legend(handles=legend_patches, 
+                        title="潛力等級", 
+                        fontsize=14, 
+                        title_fontsize=16, 
+                        loc='upper right',
+                        bbox_to_anchor=(0.95, 0.95),
+                        fancybox=True,
+                        shadow=True,
+                        frameon=True,
+                        framealpha=0.9,
+                        facecolor='white',
+                        edgecolor='#cccccc'
+                       )
+    legend.get_title().set_fontweight('bold')
     
-    # 添加數據來源和方法說明
-    plt.figtext(0.02, 0.02, 
-                f"數據來源: 桃園市政府開放數據\n分析方法: Jenks自然斷點分級 (3級)\n分數範圍: {config['score_range'][0]:.1f} - {config['score_range'][1]:.1f} (0-10分制)",
-                fontsize=10, ha='left')
+    # 添加底部說明
+    footer_text = "數據來源：桃園市政府開放數據 | 分析方法：Jenks自然斷點分級 (3級) | 分數範圍：0.0 - 10.0 (0-10分制)"
+    fig.text(0.5, 0.05, footer_text, ha='center', va='bottom', fontsize=12, color='#888888')
     
-    # 保存地圖
-    os.makedirs('output', exist_ok=True)
-    os.makedirs('docs', exist_ok=True)
-    output_path_output = 'output/taoyuan_potential_map.png'
-    output_path_docs = 'docs/taoyuan_potential_map.png'
-    plt.savefig(output_path_output, dpi=300, bbox_inches='tight', facecolor='white')
-    plt.savefig(output_path_docs, dpi=300, bbox_inches='tight', facecolor='white')
+    # 調整佈局並保存
+    plt.tight_layout(rect=[0, 0.05, 1, 0.95]) # 留出空間給底部文字和標題
     
-    print(f"✅ 靜態地圖已保存: {output_path_output} 和 {output_path_docs}")
-    plt.close()  # Close the figure to free memory
-    return fig
+    output_path = 'output/taoyuan_potential_map.png'
+    plt.savefig(output_path, dpi=300, bbox_inches='tight', pad_inches=0.1, facecolor=ax.get_facecolor())
+    
+    print(f"✅ 靜態地圖已保存至: {output_path}")
+    return output_path
 
 def generate_interactive_map(df, jenks_data):
     """生成互動式地圖"""

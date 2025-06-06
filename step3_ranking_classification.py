@@ -42,21 +42,24 @@ def load_data():
     return df, districts, feature_names, X
 
 def get_feature_properties():
-    """获取特徵属性和權重"""
-    # 使用42个妥协方案中第37个配置的权重
+    """获取特徵属性和權重 - 方案A: 統一Z-score策略"""
+    # 🆕 方案A: 醫療權重30%分配給3個子指標
     feature_properties = {
         '人口_working_age_ratio': {'direction': 'positive', 'weight': 0.15, 'description': '工作年齡人口比例'},
         '商業_hhi_index': {'direction': 'negative', 'weight': 0.10, 'description': '商業集中度 (轉分散度)'},
         '所得_median_household_income': {'direction': 'positive', 'weight': 0.40, 'description': '家戶中位數所得'},
         'tertiary_industry_ratio': {'direction': 'positive', 'weight': 0.05, 'description': '服務業比例'},
-        'medical_index': {'direction': 'positive', 'weight': 0.30, 'description': '醫療指數'}
+        # 🏥 醫療30%權重分配給3個子指標
+        'medical_beds_per_1k': {'direction': 'positive', 'weight': 0.10, 'description': '每千人病床數'},
+        'medical_staff_per_1k': {'direction': 'positive', 'weight': 0.10, 'description': '每千人醫療人員'},
+        'medical_facility_density': {'direction': 'positive', 'weight': 0.10, 'description': '醫療設施密度'}
     }
     
     # 验证权重总和
     total_weight = sum(props['weight'] for props in feature_properties.values())
     print(f"\n🔍 權重配置驗證:")
     print(f"  權重總和: {total_weight:.3f} (目標: 1.000)")
-    print(f"  配置說明: 使用妥協方案第37個配置")
+    print(f"  配置說明: 方案A統一Z-score策略 - 醫療30%權重分解為3個子指標")
     
     if abs(total_weight - 1.0) > 0.001:
         print(f"  ⚠️ 權重總和不等於1，進行標準化...")
@@ -66,14 +69,20 @@ def get_feature_properties():
         print(f"  ✅ 權重已標準化")
     
     print(f"  詳細權重設定:")
+    medical_total = 0
     for feature, props in feature_properties.items():
         direction_symbol = "+" if props['direction'] == 'positive' else "-"
         weight_pct = f"{props['weight']:.1%}"
-        if props['weight'] >= 0.3:
+        if feature.startswith('medical_'):
+            weight_pct += " 🏥"
+            medical_total += props['weight']
+        elif props['weight'] >= 0.3:
             weight_pct += " 🎯高權重"
         elif props['weight'] <= 0.1:
             weight_pct += " 🔽低權重"
         print(f"    {feature}: {weight_pct} ({direction_symbol}) - {props['description']}")
+    
+    print(f"  📊 醫療總權重: {medical_total:.1%} (3個子指標)")
     
     return feature_properties
 

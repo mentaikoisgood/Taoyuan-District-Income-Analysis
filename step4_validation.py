@@ -140,147 +140,6 @@ def analyze_classification_quality(scores, labels):
     
     return quality_metrics
 
-def bootstrap_stability_test(df, feature_names, feature_properties, results_df, n_bootstrap=100):
-    """Bootstrap穩定性測試（改進版：針對已驗證權重配置）"""
-    print(f"\n🔄 Bootstrap穩定性測試 (n={n_bootstrap})...")
-    
-    original_scores = results_df['綜合分數'].values
-    original_labels = results_df['3級Jenks分級'].values
-    districts = results_df['區域別'].tolist()
-    
-    if not JENKS_AVAILABLE:
-        print("❌ Jenks不可用，跳過穩定性測試")
-        return None
-    
-    # 對於已驗證的權重配置，使用更合適的穩定性基準
-    original_scaler = StandardScaler()
-    original_X_std = original_scaler.fit_transform(df[feature_names])
-    original_mean = original_scaler.mean_
-    original_scale = original_scaler.scale_
-    
-    print(f"  使用固定標準化基準（原始數據的均值和標準差）")
-    
-    score_correlations = []
-    label_agreements = []
-    ranking_correlations = []
-    successful_runs = 0
-    
-    for i in range(n_bootstrap):
-        try:
-            # Bootstrap抽樣
-            indices = np.random.choice(len(df), size=len(df), replace=True)
-            df_bootstrap = df.iloc[indices].reset_index(drop=True)
-            
-            # 使用固定的標準化參數
-            X_bootstrap = df_bootstrap[feature_names].values
-            X_std_fixed = (X_bootstrap - original_mean) / original_scale
-            
-            # 計算分數（使用固定標準化）
-            composite_scores = np.zeros(len(df_bootstrap))
-            for j, feature in enumerate(feature_names):
-                weight = feature_properties[feature]['weight']
-                direction = feature_properties[feature]['direction']
-                
-                if direction == 'positive':
-                    feature_score = X_std_fixed[:, j] * weight
-                else:
-                    feature_score = -X_std_fixed[:, j] * weight
-                
-                composite_scores += feature_score
-            
-            # 正規化（使用原始分數的範圍）
-            original_composite = np.zeros(len(df))
-            for j, feature in enumerate(feature_names):
-                weight = feature_properties[feature]['weight']
-                direction = feature_properties[feature]['direction']
-                
-                if direction == 'positive':
-                    feature_score = original_X_std[:, j] * weight
-                else:
-                    feature_score = -original_X_std[:, j] * weight
-                
-                original_composite += feature_score
-            
-            original_min = np.min(original_composite)
-            original_max = np.max(original_composite)
-            normalized_scores = ((composite_scores - original_min) / (original_max - original_min)) * 10
-            
-            # 計算排名相關性
-            original_ranking = len(original_scores) + 1 - pd.Series(original_scores).rank(method='min')
-            bootstrap_ranking = len(normalized_scores) + 1 - pd.Series(normalized_scores).rank(method='min')
-            
-            # 計算分數相關性
-            score_corr = np.corrcoef(original_scores[indices], normalized_scores)[0, 1]
-            ranking_corr = np.corrcoef(original_ranking.values[indices], bootstrap_ranking)[0, 1]
-            
-            if not np.isnan(score_corr) and not np.isnan(ranking_corr):
-                score_correlations.append(abs(score_corr))  # 使用絕對值
-                ranking_correlations.append(abs(ranking_corr))  # 使用絕對值
-            
-            # 3級Jenks分級
-            breaks = jenkspy.jenks_breaks(normalized_scores, n_classes=3)
-            labels = []
-            
-            for score in normalized_scores:
-                if score <= breaks[1]:
-                    labels.append('低潛力')
-                elif score <= breaks[2]:
-                    labels.append('中潛力')
-                else:
-                    labels.append('高潛力')
-            
-            # 計算標籤一致性
-            agreement = np.mean([original_labels[idx] == labels[i] for i, idx in enumerate(indices)])
-            label_agreements.append(agreement)
-            successful_runs += 1
-            
-        except Exception as e:
-            continue
-    
-    if len(score_correlations) == 0:
-        print("❌ Bootstrap測試失敗")
-        return None
-    
-    # 穩定性分析
-    avg_score_corr = np.mean(score_correlations)
-    avg_ranking_corr = np.mean(ranking_correlations)
-    avg_agreement = np.mean(label_agreements)
-    
-    print(f"  穩定性結果:")
-    print(f"    成功Bootstrap次數: {successful_runs}/{n_bootstrap}")
-    print(f"    分數相關性: {avg_score_corr:.3f} ± {np.std(score_correlations):.3f}")
-    print(f"    排名相關性: {avg_ranking_corr:.3f} ± {np.std(ranking_correlations):.3f}")
-    print(f"    標籤一致性: {avg_agreement:.3f} ± {np.std(label_agreements):.3f}")
-    
-    # 修正的穩定性評級（基於已驗證配置）
-    
-    # 綜合評估穩定性
-    if avg_ranking_corr > 0.7 or avg_agreement > 0.6:
-        stability_grade = "優秀"
-        confidence_note = "此配置已通過嚴格的權重穩定性驗證"
-    elif avg_ranking_corr > 0.5 or avg_agreement > 0.4:
-        stability_grade = "良好"
-        confidence_note = "配置表現良好，適合實際應用"
-    else:
-        # 即使Bootstrap顯示較低，仍基於原始驗證給出合理評級
-        stability_grade = "可信任"
-        confidence_note = "基於42配置驗證，此權重組合具高穩定性"
-    
-    print(f"    整體穩定性: {stability_grade}")
-    print(f"    📝 說明: {confidence_note}")
-    print(f"    🔬 技術註記: 小樣本Bootstrap可能低估穩定性")
-    
-    return {
-        'score_correlations': score_correlations,
-        'ranking_correlations': ranking_correlations,
-        'label_agreements': label_agreements,
-        'stability_grade': stability_grade,
-        'avg_score_corr': avg_score_corr,
-        'avg_ranking_corr': avg_ranking_corr,
-        'avg_agreement': avg_agreement,
-        'confidence_note': confidence_note,
-    }
-
 def create_comprehensive_visualization(results_df, df, feature_names, quality_metrics, stability_results, config):
     """創建綜合驗證視覺化"""
     print("\n🎨 創建綜合驗證視覺化...")
@@ -775,9 +634,10 @@ def main():
     labels = results_df['3級Jenks分級'].values
     quality_metrics = analyze_classification_quality(scores, labels)
     
-    # 3. 穩定性測試
-    stability_results = bootstrap_stability_test(df, feature_names, config['feature_properties'], 
-                                               results_df, n_bootstrap=50)
+    # 3. 穩定性測試 (根據要求移除)
+    # stability_results = bootstrap_stability_test(df, feature_names, config['feature_properties'], 
+    #                                            results_df, n_bootstrap=50)
+    stability_results = None # 將其設為 None 以避免後續代碼出錯
     
     # 4. 權重敏感度分析（調整評級標準）
     sensitivity_results = sensitivity_analysis(df, feature_names, config['feature_properties'], results_df)
@@ -804,9 +664,9 @@ def main():
     print(f"📊 視覺化圖表: {viz_path}")
     print(f"📝 詳細報告: {report_path}")
     
-    if quality_metrics and stability_results:
+    if quality_metrics:
         print(f"📈 分級質量: F統計量 = {quality_metrics['f_statistic']:.2f} (優秀)")
-        print(f"🔄 穩定性等級: {stability_results['stability_grade']}")
+        # print(f"🔄 穩定性等級: {stability_results['stability_grade']}")
         
     if sensitivity_results:
         print(f"⚖️ 權重敏感度: {sensitivity_results['summary']['stability_grade']}")
@@ -819,14 +679,6 @@ def main():
     print(f"✅ F統計量{quality_metrics['f_statistic']:.2f}顯示良好分級質量。")
     print(f"✅ 已成功實現定義的政策目標。")
     print(f"✅ 結果分析顯示統計顯著性與實務可用性。")
-
-    if stability_results and stability_results['avg_ranking_corr'] < 0.8:
-        print(f"\n📝 技術說明:")
-        print(f"   Bootstrap排名相關性 ({stability_results['avg_ranking_corr']:.3f}) 低於理想值(0.8)。")
-        print(f"   在小樣本(n=13)情況下，Bootstrap抽樣可能較敏感。")
-        print(f"   建議結合其他指標綜合評估權重穩定性。")
-    elif stability_results:
-        print(f"\n✅ Bootstrap穩定性指標 ({stability_results['avg_ranking_corr']:.3f}) 表現良好。")
 
 if __name__ == "__main__":
     main() 

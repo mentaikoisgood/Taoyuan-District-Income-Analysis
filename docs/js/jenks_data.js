@@ -1,10 +1,10 @@
 // 3級Jenks分級分析數據
-// 自動生成於 2025-06-06 10:07:39
+// 自動生成於 2025-06-06 17:24:10
 
 const DASHBOARD_DATA = {
   "title": "桃園市行政區3級Jenks分級分析",
   "subtitle": "基於Jenks自然斷點的13個行政區發展潛力評估 (0-10分制)",
-  "last_updated": "2025-06-06 10:07:39",
+  "last_updated": "2025-06-06 17:24:10",
   "summary": {
     "total_districts": 13,
     "method": "3級Jenks自然斷點",

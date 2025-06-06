@@ -1,5 +1,5 @@
 {
-  "total_features": 5,
+  "total_features": 7,
   "total_samples": 13,
   "missing_values": 0,
   "kept_features": [
@@ -7,6 +7,8 @@
     "商業_hhi_index",
     "所得_median_household_income",
     "tertiary_industry_ratio",
-    "medical_index"
+    "medical_beds_per_1k",
+    "medical_staff_per_1k",
+    "medical_facility_density"
   ]
 }
