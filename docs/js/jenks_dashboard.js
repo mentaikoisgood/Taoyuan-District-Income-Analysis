@@ -269,8 +269,8 @@ function initializeScatterChart() {
         data: groupedData[levelKey],
         backgroundColor: levelColors[levelKey],
         borderColor: levelColors[levelKey],
-        pointRadius: 8,
-        pointHoverRadius: 10,
+        pointRadius: 2,
+        pointHoverRadius: 4,
         pointBorderWidth: 0, // 移除邊框
         showLine: false // 確保不顯示連線
     }));
@@ -403,6 +403,7 @@ function initializeScatterChart() {
         }
     });
     console.log("散點圖已初始化，圓點大小設為:", datasets[0]?.pointRadius || "未設定");
+    console.log("所有數據集的圓點大小:", datasets.map(d => `${d.label}: ${d.pointRadius}`));
 }
 
 function initializeRadarChart() {
