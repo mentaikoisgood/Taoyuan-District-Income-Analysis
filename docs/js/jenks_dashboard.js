@@ -269,8 +269,8 @@ function initializeScatterChart() {
         data: groupedData[levelKey],
         backgroundColor: levelColors[levelKey],
         borderColor: levelColors[levelKey],
-        pointRadius: 10,
-        pointHoverRadius: 12,
+        pointRadius: 8,
+        pointHoverRadius: 10,
         pointBorderWidth: 0, // 移除邊框
         showLine: false // 確保不顯示連線
     }));
@@ -344,7 +344,7 @@ function initializeScatterChart() {
                     },
                     anchor: 'center',                // 錨點設定為圓點中心
                     align: 'top',                    // 對齊方式設為上方
-                    offset: 14                       // 調整偏移量為適中距離
+                    offset: 10                       // 調整偏移量為適中距離
                 }
             },
             scales: {
