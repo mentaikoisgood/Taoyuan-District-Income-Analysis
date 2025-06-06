@@ -269,8 +269,8 @@ function initializeScatterChart() {
         data: groupedData[levelKey],
         backgroundColor: levelColors[levelKey],
         borderColor: levelColors[levelKey],
-        pointRadius: 8,
-        pointHoverRadius: 10,
+        pointRadius: 5,
+        pointHoverRadius: 7,
         pointBorderWidth: 0, // 移除邊框
         showLine: false // 確保不顯示連線
     }));
@@ -336,7 +336,7 @@ function initializeScatterChart() {
                     backgroundColor: 'transparent',  // 去掉背景框
                     borderWidth: 0,                  // 去掉邊框
                     font: {
-                        size: 14,                    // 增大字體讓標籤更明顯
+                        size: 12,                    // 縮小字體大小
                         weight: '600'
                     },
                     formatter: function(value, context) {
@@ -344,7 +344,7 @@ function initializeScatterChart() {
                     },
                     anchor: 'center',                // 錨點設定為圓點中心
                     align: 'top',                    // 對齊方式設為上方
-                    offset: 10                       // 調整偏移量為適中距離
+                    offset: 6                        // 縮小文字與圓點的間距
                 }
             },
             scales: {
