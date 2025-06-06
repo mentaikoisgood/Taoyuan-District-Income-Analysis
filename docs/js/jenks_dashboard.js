@@ -344,7 +344,7 @@ function initializeScatterChart() {
                     },
                     anchor: 'center',                // 錨點設定為圓點中心
                     align: 'top',                    // 對齊方式設為上方
-                    offset: 6                        // 增加偏移量讓文字與圓點距離更遠
+                    offset: 10                       // 進一步增加偏移量讓文字與圓點距離更遠
                 }
             },
             scales: {
