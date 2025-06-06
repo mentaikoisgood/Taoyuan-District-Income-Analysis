@@ -25,12 +25,15 @@ from folium import plugins
 import shapely.geometry
 from shapely.geometry import mapping
 from scipy import stats
+import matplotlib.font_manager as fm
 
 warnings.filterwarnings('ignore')
 
 # 設定中文字體
 plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'SimHei', 'Microsoft YaHei']
 plt.rcParams['axes.unicode_minus'] = False
+
+HAS_GEO = True
 
 def load_classification_results():
     """載入3級Jenks分級結果"""
@@ -141,9 +144,9 @@ def create_scatter_chart_data(results_df):
     
     scatter_data = []
     color_map = {
-        '高潛力': '#FF6B6B',      # 紅色 (Red)
-        '中潛力': '#FFA500',      # 橙色 (Orange)  
-        '低潛力': '#4ECDC4',      # 藍綠色 (Teal Blue)
+        '高潛力': '#eb7062',      # 紅色 (Red)
+        '中潛力': '#f5b041',      # 橙色 (Orange)  
+        '低潛力': '#5cace2',      # 藍色 (Blue)
     }
     
     for _, row in results_df.iterrows():
@@ -286,9 +289,9 @@ def create_static_map(merged_gdf, config):
     
     # 設定顏色映射
     color_map = {
-        '高潛力': '#FF6B6B',      # 紅色 (Red)
-        '中潛力': '#FFA500',      # 橙色 (Orange)  
-        '低潛力': '#4ECDC4',      # 藍綠色 (Teal Blue)
+        '高潛力': '#eb7062',      # 紅色 (Red)
+        '中潛力': '#f5b041',      # 橙色 (Orange)  
+        '低潛力': '#5cace2',      # 藍色 (Blue)
     }
     
     # 創建圖形
@@ -358,143 +361,186 @@ def create_static_map(merged_gdf, config):
     plt.close()  # Close the figure to free memory
     return fig
 
-def create_interactive_map(merged_gdf, config):
-    """創建互動式地圖"""
-    if merged_gdf is None or config is None:
-        print("❌ 無法創建互動式地圖：數據不完整。")
-        return None
-    print("🌐 創建互動式地圖...")
+def generate_interactive_map(df, jenks_data):
+    """生成互動式地圖"""
+    print("🗺️ 生成互動式地圖...")
     
-    # 計算桃園市中心點 (only use valid geometries)
-    valid_geometries = merged_gdf[merged_gdf.geometry.is_valid & merged_gdf.geometry.notna()]
-    if valid_geometries.empty:
-        print("⚠️ 沒有有效的地理數據來計算中心點。使用預設中心。")
-        center_lat, center_lon = 24.9937, 121.2988 # Default to Taoyuan City Hall
-    else:
-        center_lat = valid_geometries.geometry.centroid.y.mean()
-        center_lon = valid_geometries.geometry.centroid.x.mean()
+    if not HAS_GEO:
+        print("⚠️ 跳過互動地圖生成（缺少地理套件）")
+        return
 
-    # 創建基礎地圖
+    gdf_map = load_map_data() # Load GeoJSON data
+    if gdf_map is None:
+        print("❌ 地理數據載入失敗，無法生成互動地圖。")
+        # Create a simple map if data load fails, indicating the error
+        center_lat, center_lng = 24.9936, 121.3010
+        m_error = folium.Map(location=[center_lat, center_lng], zoom_start=10, tiles='OpenStreetMap')
+        title_html = '<h3 align="center" style="font-size:20px; color:red;"><b>桃園市行政區發展潛力地圖 (地理數據載入失敗)</b></h3>'
+        m_error.get_root().html.add_child(folium.Element(title_html))
+        os.makedirs('docs', exist_ok=True)
+        m_error.save('docs/map_interactive.html')
+        print("⚠️ 已生成一個指示錯誤的基本地圖。")
+        return
+
+    # 標準化 jenks_data 中的區域名稱欄位
+    if '區域別' not in jenks_data.columns:
+        if 'district' in jenks_data.columns:
+            print("ℹ️ 'jenks_data' 中使用 'district' 作為區域名稱，將其重命名為 '區域別'")
+            jenks_data = jenks_data.rename(columns={'district': '區域別'})
+        else:
+            print("❌ 'jenks_data' 中缺少 '區域別' 或 'district' 欄位，無法合併。")
+            # Create a simple map if key column is missing
+            center_lat, center_lng = 24.9936, 121.3010
+            m_error = folium.Map(location=[center_lat, center_lng], zoom_start=10, tiles='OpenStreetMap')
+            title_html = '<h3 align="center" style="font-size:20px; color:red;"><b>桃園市行政區發展潛力地圖 (分級數據欄位缺失)</b></h3>'
+            m_error.get_root().html.add_child(folium.Element(title_html))
+            os.makedirs('docs', exist_ok=True)
+            m_error.save('docs/map_interactive.html')
+            print("⚠️ 已生成一個指示錯誤的基本地圖。")
+            return
+            
+    # 合併地理數據與分級結果
+    merged_gdf = merge_geodata_with_results(gdf_map, jenks_data)
+    
+    if merged_gdf is None or merged_gdf.empty or 'geometry' not in merged_gdf.columns:
+        print("❌ 地理數據與分級結果合併失敗、為空或缺少'geometry'欄位，無法生成互動地圖。")
+        center_lat, center_lng = 24.9936, 121.3010
+        m_error = folium.Map(location=[center_lat, center_lng], zoom_start=10, tiles='OpenStreetMap')
+        title_html = '<h3 align="center" style="font-size:20px; color:red;"><b>桃園市行政區發展潛力地圖 (數據合併失敗)</b></h3>'
+        m_error.get_root().html.add_child(folium.Element(title_html))
+        os.makedirs('docs', exist_ok=True)
+        m_error.save('docs/map_interactive.html')
+        print("⚠️ 已生成一個指示錯誤的基本地圖。")
+        return
+        
+    # 檢查必要欄位是否存在
+    required_fields = ['區域別', '3級Jenks分級', '綜合分數', '排名']
+    missing_fields = [field for field in required_fields if field not in merged_gdf.columns]
+    if missing_fields:
+        print(f"⚠️ 缺少必要欄位: {missing_fields}")
+        for field in missing_fields:
+            merged_gdf[field] = 'N/A'
+    
+    # 創建英文潛力等級欄位用於顏色映射
+    level_mapping = {
+        '高潛力': 'High Potential',
+        '中潛力': 'Medium Potential',
+        '低潛力': 'Low Potential'
+    }
+    merged_gdf['level'] = merged_gdf['3級Jenks分級'].map(level_mapping).fillna('N/A')
+
+    # 創建基本地圖
+    if not merged_gdf.empty and not merged_gdf[merged_gdf.geometry.is_valid].empty:
+        valid_centroids_gdf = merged_gdf[merged_gdf.geometry.is_valid]
+        center_lat = float(valid_centroids_gdf.geometry.centroid.y.mean())
+        center_lng = float(valid_centroids_gdf.geometry.centroid.x.mean())
+    else:
+        center_lat, center_lng = 24.9936, 121.3010
+
     m = folium.Map(
-        location=[center_lat, center_lon],
-        zoom_start=10, # Adjusted zoom for better overview
-        tiles='OpenStreetMap'
+        location=[center_lat, center_lng],
+        zoom_start=10,
+        tiles='CartoDB dark_matter'
     )
-    
-    # 添加其他底圖選項
-    folium.TileLayer('CartoDB positron', name='CartoDB Positron').add_to(m)
-    folium.TileLayer('CartoDB dark_matter', name='CartoDB Dark').add_to(m)
-    
-    # 設定顏色映射
+
+    # 定義顏色映射
     color_map = {
-        '高潛力': '#FF6B6B',      # 紅色 (Red)
-        '中潛力': '#FFA500',      # 橙色 (Orange)  
-        '低潛力': '#4ECDC4',      # 藍綠色 (Teal Blue)
+        'High Potential': '#eb7062',  # 紅色
+        'Medium Potential': '#f5b041', # 橙色
+        'Low Potential': '#5cace2',   # 藍色
+        'N/A': '#757575' # Grey for N/A
     }
     
-    # 轉換為GeoJSON格式 (ensure only rows with geometry are included)
-    geojson_data_gdf = merged_gdf[merged_gdf.geometry.notna()]
-    if geojson_data_gdf.empty:
-        print("⚠️ 沒有地理數據可添加到互動式地圖。")
-    else:
-        geojson_data = geojson_data_gdf.to_json()
+    # 添加 GeoJSON 圖層
+    geojson_layer = folium.GeoJson(
+        merged_gdf,
+        name='桃園市發展潛力分級',
+        style_function=lambda feature: {
+            'fillColor': color_map.get(feature['properties'].get('level', 'N/A'), '#757575'),
+            'color': '#333333',
+            'weight': 1.5, # Slightly thicker border
+            'fillOpacity': 0.85, # More opaque for better visibility on dark background
+        },
+        tooltip=folium.GeoJsonTooltip(
+            fields=['區域別', '3級Jenks分級', '綜合分數'],
+            aliases=['行政區:', '潛力等級:', '綜合分數:'],
+            localize=True,
+            sticky=False,
+            style=("background-color: rgba(30,30,30,0.9); color: #ffffff; font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 13px; padding: 8px; border-radius: 4px; box-shadow: 0 0 5px rgba(0,0,0,0.5); border: 1px solid #333333;")
+        ),
+        popup=folium.GeoJsonPopup(
+            fields=['區域別', '3級Jenks分級', '綜合分數', '排名'],
+            aliases=['行政區:', '潛力等級:', '綜合分數:', '排名:'],
+            localize=True,
+            style=("width: 200px; background-color: rgba(30,30,30,0.9); color: #ffffff; font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 13px; padding: 10px; border-radius: 4px; border: 1px solid #333333;")
+        )
+    )
+    geojson_layer.add_to(m)
 
-        # 添加行政區圖層
-        folium.GeoJson(
-            geojson_data,
-            style_function=lambda feature: {
-                'fillColor': color_map.get(feature['properties'].get('3級Jenks分級'), '#808080'), # Default to gray if level is missing
-                'color': 'white',
-                'weight': 2,
-                'fillOpacity': 0.7,
-                'opacity': 1
-            },
-            highlight_function=lambda feature: {'weight': 4, 'fillOpacity': 0.9, 'opacity': 1},
-            tooltip=folium.GeoJsonTooltip(
-                fields=['區域別', '3級Jenks分級', '綜合分數', '排名'],
-                aliases=['行政區:', '潛力等級:', '綜合分數:', '排名:'],
-                style="background-color: white; border: 2px solid black; border-radius: 3px; box-shadow: 3px;"
-            )
-        ).add_to(m)
+    # 添加行政區名稱標註
+    for idx, row in merged_gdf.iterrows():
+        if pd.notna(row.geometry) and row.geometry.centroid:
+            centroid = row.geometry.centroid
+            district_name = row['區域別']  # 保留完整區域名稱
+            
+            # 創建文字標籤
+            folium.Marker(
+                location=[centroid.y, centroid.x],
+                icon=folium.DivIcon(
+                    html=f'''<div style="
+                        font-family: 'Microsoft JhengHei', 'Arial Unicode MS', Arial, sans-serif;
+                        font-size: 14px;
+                        font-weight: bold;
+                        color: #ffffff;
+                        text-shadow: 1px 1px 2px rgba(0,0,0,0.8), -1px -1px 2px rgba(0,0,0,0.8), 1px -1px 2px rgba(0,0,0,0.8), -1px 1px 2px rgba(0,0,0,0.8);
+                        text-align: center;
+                        white-space: nowrap;
+                        pointer-events: none;
+                        user-select: none;
+                    ">{district_name}</div>''',
+                    icon_size=(60, 20),
+                    icon_anchor=(30, 10),
+                    class_name='district-label'
+                )
+            ).add_to(m)
 
-        # 為每個行政區添加詳細彈出框 (only for rows with score and valid geometry)
-        for idx, row in geojson_data_gdf.iterrows():
-            if pd.notna(row['綜合分數']) and row.geometry.is_valid and row.geometry.centroid:
-                centroid = row.geometry.centroid
-                popup_html = f"""
-                <div style="font-family: Arial; width: 250px;">
-                    <h4 style="margin: 0; color: {color_map.get(row['3級Jenks分級'], '#000')};">
-                        {row['區域別']}
-                    </h4>
-                    <hr style="margin: 5px 0;">
-                    <p><strong>潛力等級:</strong> {row.get('3級Jenks分級', 'N/A')}</p>
-                    <p><strong>綜合分數:</strong> {row['綜合分數']:.1f}/10</p>
-                    <p><strong>排名:</strong> 第 {int(row['排名'])} 名</p>
-                    <hr style="margin: 5px 0;">
-                    <p style="font-size: 12px; color: #666;">
-                        發展潛力綜合評估
-                    </p>
-                </div>
-                """
-                
-                folium.Marker(
-                    location=[centroid.y, centroid.x],
-                    popup=folium.Popup(popup_html, max_width=300),
-                    icon=folium.DivIcon(
-                        html=f"""
-                        <div style="
-                            background-color: {color_map.get(row['3級Jenks分級'], '#808080')};
-                            color: white;
-                            border: 2px solid white;
-                            border-radius: 50%;
-                            width: 30px;
-                            height: 30px;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            font-weight: bold;
-                            font-size: 12px;
-                            box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-                        ">
-                            {int(row['排名'])}
-                        </div>
-                        """,
-                        icon_size=(30, 30),
-                        icon_anchor=(15, 15)
-                    )
-                ).add_to(m)
-    
     # 添加圖例
-    legend_html = f"""
-    <div style="
-        position: fixed;
-        bottom: 50px; left: 10px; width: 180px; height: auto;
-        background-color: white; border:2px solid grey; z-index:9999;
-        font-size:14px; padding: 10px; border-radius: 5px;
-    ">
-        <h4 style="margin: 0 0 10px 0; text-align: center;">發展潛力等級</h4>
-        <p style="margin: 0;"><i class="fa fa-square" style="color: {color_map['高潛力']};"></i> 高發展潛力</p>
-        <p style="margin: 0;"><i class="fa fa-square" style="color: {color_map['中潛力']};"></i> 中發展潛力</p>
-        <p style="margin: 0;"><i class="fa fa-square" style="color: {color_map['低潛力']};"></i> 低發展潛力</p>
-        <hr style="margin: 8px 0;">
-        <p style="margin: 0; font-size: 12px; color: #666;">分數: {config['score_range'][0]:.1f}-{config['score_range'][1]:.1f}/10</p>
-    </div>
+    legend_html = """
+     <div style="position: fixed; 
+                 bottom: 30px; left: 30px; width: 150px;  
+                 border:1px solid #333333; z-index:9999; font-size:14px;
+                 background-color:rgba(30,30,30,0.9); border-radius: 5px; padding: 10px; box-shadow: 0 0 8px rgba(0,0,0,0.3);">
+       <h4 style="margin-top:0; margin-bottom:8px; font-weight:bold; color:#ffffff;">圖例</h4>
+       <div style="margin-bottom: 5px; color:#ffffff;"><i style="background:#eb7062; color:#eb7062; border-radius:50%; margin-right:5px;">__</i> 高潛力</div>
+       <div style="margin-bottom: 5px; color:#ffffff;"><i style="background:#f5b041; color:#f5b041; border-radius:50%; margin-right:5px;">__</i> 中潛力</div>
+       <div style="margin-bottom: 5px; color:#ffffff;"><i style="background:#5cace2; color:#5cace2; border-radius:50%; margin-right:5px;">__</i> 低潛力</div>
+       <div style="color:#ffffff;"><i style="background:#757575; color:#757575; border-radius:50%; margin-right:5px;">__</i> 無數據</div>
+     </div>
     """
     m.get_root().html.add_child(folium.Element(legend_html))
     
-    # 添加圖層控制
+    # 添加標題
+    title_html = '''
+    <div style="position: fixed; 
+                top: 10px; left: 50%; transform: translateX(-50%); 
+                width: auto; padding: 8px 15px; 
+                background-color: rgba(30,30,30,0.9); 
+                border: 1px solid #333333; border-radius: 5px; 
+                z-index:9990; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+        <h3 align="center" style="font-size:18px; font-family: 'Microsoft JhengHei', 'Segoe UI', sans-serif; color: #ffffff; margin:0;">
+            <b>桃園市行政區發展潛力地圖</b>
+        </h3>
+    </div>
+    '''
+    m.get_root().html.add_child(folium.Element(title_html))
+
+    # 添加圖層控制器
     folium.LayerControl().add_to(m)
     
-    # 添加全屏按鈕
-    plugins.Fullscreen().add_to(m)
-    
-    # 保存互動式地圖
+    # 保存地圖
     os.makedirs('docs', exist_ok=True)
-    output_path = 'docs/map_interactive.html'
-    m.save(output_path)
-    
-    print(f"✅ 互動式地圖已保存: {output_path}")
-    return m
+    m.save('docs/map_interactive.html')
+    print("✅ 互動式地圖生成完成: docs/map_interactive.html")
 
 def create_map_data_for_web(merged_gdf, config):
     """為網頁創建地圖數據 (e.g. for a custom JS map component if not using iframe)"""
@@ -519,9 +565,9 @@ def create_map_data_for_web(merged_gdf, config):
                 'score': float(round(row['綜合分數'], 1)),
                 'rank': int(row['排名']),
                 'color': {
-                    '高潛力': '#FF6B6B',
-                    '中潛力': '#FFA500',
-                    '低潛力': '#4ECDC4'
+                    '高潛力': '#eb7062',
+                    '中潛力': '#f5b041',
+                    '低潛力': '#5cace2'
                 }.get(row.get('3級Jenks分級'), '#808080')
             },
             'geometry': mapping(row.geometry) # Uses shapely.geometry.mapping
@@ -666,7 +712,28 @@ def generate_web_data():
     if results_df is None:
         print("❌ 無法載入數據，請先運行 step3_ranking_classification.py")
         return
+
+    # 標準化 results_df 中的欄位，以供地圖和其他部分使用
+    level_mapping_to_en = {'高潛力': 'High Potential', '中潛力': 'Medium Potential', '低潛力': 'Low Potential'}
+    results_df['level'] = results_df['3級Jenks分級'].map(level_mapping_to_en).fillna('N/A')
     
+    if '綜合分數' in results_df.columns:
+        results_df['comprehensive_score'] = results_df['綜合分數'].round(1)
+    else:
+        print("⚠️ 'results_df' 中缺少 '綜合分數' 欄位。地圖提示訊息可能不正確。")
+        results_df['comprehensive_score'] = 'N/A'
+        
+    if '3級Jenks分級' in results_df.columns:
+        results_df['level_chinese'] = results_df['3級Jenks分級']
+    else:
+        print("⚠️ 'results_df' 中缺少 '3級Jenks分級' 欄位。地圖提示訊息可能不正確。")
+        results_df['level_chinese'] = '無數據'
+
+    if '区域别' in results_df.columns and '區域別' not in results_df.columns:
+        results_df.rename(columns={'区域别': '區域別'}, inplace=True)
+    elif 'district' in results_df.columns and '區域別' not in results_df.columns:
+         results_df.rename(columns={'district': '區域別'}, inplace=True)
+
     # 確保docs/data目錄存在
     os.makedirs('docs/data', exist_ok=True)
     
@@ -685,7 +752,7 @@ def generate_web_data():
         if merged_gdf is not None:
             # 生成各種地圖輸出
             create_static_map(merged_gdf, config)
-            create_interactive_map(merged_gdf, config) 
+            generate_interactive_map(df, results_df)
             create_map_data_for_web(merged_gdf, config)
             generate_map_statistics(merged_gdf, config)
     
@@ -751,7 +818,14 @@ if (typeof module !== 'undefined' && module.exports) {{
 
 def update_html_for_jenks():
     """更新HTML文件以適配3級Jenks分級 (及10分制) 並加入互動地圖"""
-    print("\n🔄 更新HTML文件 (docs/index.html)...")
+    print("\n🔄 檢查HTML文件 (docs/index.html)...")
+    
+    # 檢查是否已存在 index.html
+    if os.path.exists('docs/index.html'):
+        print("✅ docs/index.html 文件已存在，跳過重新生成")
+        return
+    
+    print("⚠️ 未找到 docs/index.html，將生成新文件...")
     
     # 生成新的HTML內容 (確保繁體中文和10分制範例)
     html_content = """<!DOCTYPE html>
@@ -767,7 +841,7 @@ def update_html_for_jenks():
     <div class="container">
         <!-- 標題區域 -->
         <header class="header">
-            <h1>🏙️ 桃園市行政區發展潛力分析</h1>
+            <h1>桃園市行政區發展潛力分析</h1>
             <p class="subtitle">基於3級Jenks自然斷點的13個行政區發展潛力評估 (0-10分制)</p>
         </header>
 
@@ -797,7 +871,7 @@ def update_html_for_jenks():
         <main class="main-content">
             <!-- 左側：分級散點圖 -->
             <section class="chart-section">
-                <h2>📊 3級Jenks分級結果</h2>
+                <h2>3級Jenks分級結果</h2>
                 <div class="chart-container">
                     <canvas id="jenksChart"></canvas>
                 </div>
@@ -811,7 +885,7 @@ def update_html_for_jenks():
 
             <!-- 右側：特徵雷達圖 -->
             <section class="chart-section">
-                <h2>🎯 特徵分析雷達圖</h2>
+                <h2>特徵分析雷達圖</h2>
                 <div class="radar-controls">
                     <select id="districtSelect">
                         <option value="">選擇行政區</option>
@@ -825,7 +899,7 @@ def update_html_for_jenks():
 
         <!-- 詳細數據表格 -->
         <section class="data-table-section">
-            <h2>📋 詳細分級結果</h2>
+            <h2>詳細分級結果</h2>
             <div class="table-container">
                 <table id="dataTable">
                     <thead>
@@ -850,54 +924,15 @@ def update_html_for_jenks():
 
         <!-- Interactive Map Section -->
         <section class="map-section content-section">
-            <h2>🗺️ 互動式發展潛力地圖</h2>
+            <h2>互動式發展潛力地圖</h2>
             <div class="map-container-iframe">
                 <iframe src="map_interactive.html" width="100%" height="600px" style="border:1px solid #ddd; border-radius: 8px;" title="桃園市互動式發展潛力地圖"></iframe>
-            </div>
-            <p style="text-align:center; font-size:14px; margin-top:10px; color: #555;">
-                <em>在地圖上探索各行政區的詳細評估結果。可拖曳、縮放，並點擊區域查看更多資訊。<br>
-                <a href="map_interactive.html" target="_blank" style="color: #007bff; text-decoration: none;">點此在新分頁中開啟全螢幕互動式地圖</a>
-                </em>
-            </p>
-        </section>
-
-        <!-- 關鍵洞察 -->
-        <section class="insights-section">
-            <h2>💡 關鍵洞察與政策建議</h2>
-            <div class="insights-grid">
-                <div class="insight-card">
-                    <h3>🏢 高潛力區域</h3>
-                    <ul>
-                        <li>桃園核心都會區重點區域</li>
-                        <li>平均綜合分數 <span id="highAvgScore">加載中...</span> 分 (0-10制)</li>
-                        <li>醫療資源充足，產業發達，所得水平高</li>
-                        <li><strong>建議:</strong> 持續強化核心競爭力與創新產業發展</li>
-                    </ul>
-                </div>
-                <div class="insight-card">
-                    <h3>🌱 中潛力區域</h3>
-                    <ul>
-                        <li>發展中區域群組</li>
-                        <li>平均綜合分數 <span id="mediumAvgScore">加載中...</span> 分 (0-10制)</li>
-                        <li>發展程度適中，具有成長潛力</li>
-                        <li><strong>建議:</strong> 因地制宜發展特色產業，加強基礎建設</li>
-                    </ul>
-                </div>
-                <div class="insight-card">
-                    <h3>🌾 低潛力區域</h3>
-                    <ul>
-                        <li>需關注區域，可能需要政策扶持</li>
-                        <li>平均綜合分數 <span id="lowAvgScore">加載中...</span> 分 (0-10制)</li>
-                        <li>發展條件相對較弱，但有特色資源</li>
-                        <li><strong>建議:</strong> 重點投入基礎建設，發展觀光與特色農業</li>
-                    </ul>
-                </div>
             </div>
         </section>
 
         <!-- 方法說明 -->
         <section class="methodology-section">
-            <h2>🔬 Jenks自然斷點分級方法</h2>
+            <h2>Jenks自然斷點分級方法</h2>
             <div class="method-steps">
                 <div class="step">
                     <h4>STEP 1: 數據準備</h4>
@@ -909,22 +944,22 @@ def update_html_for_jenks():
                 </div>
                 <div class="step">
                     <h4>STEP 3: 權重計算</h4>
-                    <p>依據選定方案設定各指標權重</p>
+                    <p>依據政策重要性設定權重 (詳細權重見選定方案)</p>
                 </div>
                 <div class="step">
                     <h4>STEP 4: Jenks分級</h4>
-                    <p>使用自然斷點方法找到最優分割點，最大化組間差異、最小化組內差異</p>
+                    <p>使用自然斷點方法找到最優分割點，形成3個潛力等級</p>
                 </div>
                 <div class="step">
                     <h4>STEP 5: 驗證分析</h4>
-                    <p>通過F統計量、效應大小等指標驗證分級質量</p>
+                    <p>通過F統計量、效應大小等指標驗證分級效果</p>
                 </div>
             </div>
         </section>
 
         <!-- 頁腳 -->
         <footer class="footer">
-            <p>&copy; 2024 桃園市行政區發展潛力分析 - 3級Jenks分級 | 
+            <p>&copy; 桃園市行政區發展潛力分析 | 
                <a href="https://github.com/mentaikoisgood/Taoyuan-District-Income-Analysis" target="_blank">
                    GitHub Repository
                </a>
@@ -939,10 +974,11 @@ def update_html_for_jenks():
 </html>"""
     
     # 保存更新的HTML
+    os.makedirs('docs', exist_ok=True)
     with open('docs/index.html', 'w', encoding='utf-8') as f:
         f.write(html_content)
     
-    print("✅ HTML文件已更新")
+    print("✅ HTML文件已生成")
 
 def main():
     """主函數"""
@@ -965,7 +1001,7 @@ def main():
         print("  - docs/data/level_stats.json")
         print("  - docs/data/method_info.json")
         print("  - docs/js/jenks_data.js")
-        print("  - docs/index.html (已更新)")
+        print("  - docs/index.html (若不存在則生成)")
         # Add new map files to the list
         print("  - output/taoyuan_potential_map.png (靜態地圖)")
         print("  - docs/taoyuan_potential_map.png (網頁用靜態地圖)")
@@ -975,9 +1011,8 @@ def main():
         
         print(f"\n🚀 網頁數據已生成於 docs/ 目錄下，可用於部署至 GitHub Pages。")
         print(f"   主儀表板: docs/index.html")
-        print(f"   互動地圖 (單獨): docs/map_interactive.html")
-        print(f"   靜態地圖與統計 (舊版 map.html 參考): docs/map.html") # Assuming map.html might still exist or be desired
-        print(f"   目標網址: @https://mentaikoisgood.github.io/Taoyuan-District-Income-Analysis/")
+        print(f"   互動地圖: docs/map_interactive.html")
+        print(f"   注意: 若要修改UI，可直接編輯 docs/ 目錄下的文件，無需重新運行此腳本")
 
 if __name__ == "__main__":
     main()

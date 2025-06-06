@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 async function loadStatistics() {
     try {
-        console.log('🔢 載入統計數據...');
+        console.log('載入統計數據...');
         
         // 載入map_statistics.json
         const response = await fetch('data/map_statistics.json');
@@ -16,27 +16,27 @@ async function loadStatistics() {
         }
         
         const statistics = await response.json();
-        console.log('✅ 統計數據載入成功:', statistics);
+        console.log('統計數據載入成功:', statistics);
         
         // 更新F統計量
         const fStatElement = document.getElementById('fStatistic');
         if (fStatElement) {
-            fStatElement.textContent = statistics.f_statistic;
-            console.log(`✅ F統計量更新: ${statistics.f_statistic}`);
+            fStatElement.textContent = statistics.f_statistic.toFixed(3);
+            console.log(`F統計量更新: ${statistics.f_statistic}`);
         }
         
         // 更新效應大小
         const effectSizeElement = document.getElementById('effectSize');
         if (effectSizeElement) {
-            effectSizeElement.textContent = statistics.effect_size;
-            console.log(`✅ 效應大小更新: ${statistics.effect_size}`);
+            effectSizeElement.textContent = statistics.effect_size.toFixed(3);
+            console.log(`效應大小更新: ${statistics.effect_size}`);
         }
         
         // 更新洞察中的平均分數
         updateInsightCards(statistics);
         
     } catch (error) {
-        console.error('❌ 載入統計數據失敗:', error);
+        console.error('載入統計數據失敗:', error);
         
         // 顯示錯誤信息
         const fStatElement = document.getElementById('fStatistic');
@@ -67,10 +67,10 @@ function updateInsightCards(statistics) {
             lowAvgElement.textContent = statistics.level_statistics.低潛力.avg_score;
         }
         
-        console.log('✅ 洞察卡片數據更新完成');
+        console.log('洞察卡片數據更新完成');
         
     } catch (error) {
-        console.error('❌ 更新洞察卡片失敗:', error);
+        console.error('更新洞察卡片失敗:', error);
     }
 }
 

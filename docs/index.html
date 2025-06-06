@@ -6,83 +6,116 @@
     <title>桃園市行政區3級Jenks分級分析儀表板</title>
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 </head>
 <body>
+    <!-- 錨點導航 -->
+    <nav class="anchor-nav" id="anchorNav">
+        <div class="nav-item" data-target="overview">概覽</div>
+        <div class="nav-item" data-target="visualization">視覺化</div>
+        <div class="nav-item" data-target="data-table">數據表</div>
+        <div class="nav-item" data-target="methodology">方法說明</div>
+    </nav>
+    
     <div class="container">
         <!-- 標題區域 -->
-        <header class="header">
-            <h1>🏙️ 桃園市行政區發展潛力分析</h1>
-            <p class="subtitle">基於3級Jenks自然斷點的13個行政區發展潛力評估 (0-10分制)</p>
+        <header class="header" id="overview">
+            <h1>桃園市行政區發展潛力分析</h1>
+            <p class="subtitle">基於 Jenks Natural Breaks Classification 的13個行政區發展潛力評估</p>
         </header>
 
         <!-- 主要指標卡片 -->
         <section class="metrics-cards">
             <div class="card high-potential">
-                <h3>高潛力</h3>
+                <div class="card-header">
+                    <h3>高潛力</h3>
+                </div>
                 <div class="metric-value" id="highCount"> 加載中... </div>
                 <div class="metric-label">個行政區</div>
-                <div class="districts-list" id="highDistricts"> 加載中... </div>
+                <div class="districts-container">
+                    <div class="districts-title">發展領先區域</div>
+                    <div class="districts-list" id="highDistricts"> 加載中... </div>
+                </div>
             </div>
             <div class="card medium-potential">
-                <h3>中潛力</h3>
+                <div class="card-header">
+                    <h3>中潛力</h3>
+                </div>
                 <div class="metric-value" id="mediumCount"> 加載中... </div>
                 <div class="metric-label">個行政區</div>
-                <div class="districts-list" id="mediumDistricts"> 加載中... </div>
+                <div class="districts-container">
+                    <div class="districts-title">穩定發展區域</div>
+                    <div class="districts-list" id="mediumDistricts"> 加載中... </div>
+                </div>
             </div>
             <div class="card low-potential">
-                <h3>低潛力</h3>
+                <div class="card-header">
+                    <h3>低潛力</h3>
+                </div>
                 <div class="metric-value" id="lowCount"> 加載中... </div>
                 <div class="metric-label">個行政區</div>
-                <div class="districts-list" id="lowDistricts"> 加載中... </div>
+                <div class="districts-container">
+                    <div class="districts-title">待發展區域</div>
+                    <div class="districts-list" id="lowDistricts"> 加載中... </div>
+                </div>
             </div>
         </section>
 
-        <!-- 主要內容區域 -->
-        <main class="main-content">
-            <!-- 左側：分級散點圖 -->
-            <section class="chart-section">
-                <h2>📊 3級Jenks分級結果</h2>
-                <div class="chart-container">
-                    <canvas id="jenksChart"></canvas>
+        <!-- 視覺化分析區域 -->
+        <section class="visualization-section content-section" id="visualization">
+            <div class="visualization-grid">
+                <!-- 左側：分級散點圖 -->
+                <div class="chart-section">
+                    <h2>分級結果分布</h2>
+                    <div class="chart-container">
+                        <canvas id="jenksChart"></canvas>
+                    </div>
+                    <div class="chart-info">
+                        <p><strong>F-Statistic:</strong> <span id="fStatistic" class="tooltip-trigger" title="">加載中...</span></p>
+                        <p><strong>Effect Size (η²):</strong> <span id="effectSize" class="tooltip-trigger" title="">加載中...</span></p>
+                    </div>
                 </div>
-                <div class="chart-info">
-                    <p><strong>F統計量:</strong> <span id="fStatistic">加載中...</span></p>
-                    <p><strong>效應大小:</strong> <span id="effectSize">加載中...</span></p>
-                    <p><strong>分級方法:</strong> Jenks自然斷點 (3級)</p>
-                    <p><strong>分數範圍:</strong> 0-10分制</p> 
-                </div>
-            </section>
 
-            <!-- 右側：特徵雷達圖 -->
-            <section class="chart-section">
-                <h2>🎯 特徵分析雷達圖</h2>
-                <div class="radar-controls">
-                    <select id="districtSelect">
-                        <option value="">選擇行政區</option>
-                    </select>
+                <!-- 右側：特徵雷達圖 -->
+                <div class="chart-section">
+                    <h2>特徵分析雷達圖</h2>
+                    <div class="radar-controls">
+                        <select id="districtSelect">
+                            <option value="">選擇行政區</option>
+                        </select>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="radarChart"></canvas>
+                    </div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="radarChart"></canvas>
+            </div>
+            
+            <!-- 地圖區域整合到視覺化區塊 -->
+            <div class="map-section">
+                <h2>空間分布地圖</h2>
+                <div class="map-container-iframe">
+                                            <iframe src="map_interactive.html" width="100%" height="600px" style="border:1px solid var(--border-color); border-radius: var(--border-radius);" title="桃園市互動式發展潛力地圖"></iframe>
                 </div>
-            </section>
-        </main>
+            </div>
+        </section>
 
         <!-- 詳細數據表格 -->
-        <section class="data-table-section">
-            <h2>📋 詳細分級結果</h2>
+        <section class="data-table-section content-section" id="data-table">
+            <h2>詳細分級結果</h2>
+            <!-- 移除重複圖例，改為在地圖或首次出現時顯示 -->
             <div class="table-container">
                 <table id="dataTable">
                     <thead>
                         <tr>
-                            <th>排名</th>
+                            <th title="各行政區依綜合分數排列的名次">排名</th>
                             <th>行政區</th>
-                            <th>潛力等級</th>
-                            <th>綜合分數 (0-10)</th>
-                            <th>工作年齡比例</th>
-                            <th>家戶中位數所得</th>
-                            <th>第三產業比例</th>
-                            <th>醫療指數</th>
-                            <th>商業集中度</th>
+                            <th title="依據Jenks自然斷點法分為高潛力(7.1-10分)、中潛力(4.6-6.9分)、低潛力(0-3.9分)三級">發展潛力</th>
+                            <th onclick="sortTable(3)" title="整合5項指標的加權總分，採0-10分制評分，分數越高代表發展潛力越佳">發展總分（0-10 分） <i class="fas fa-sort"></i></th>
+                            <th onclick="sortTable(4)" title="15-64歲工作年齡人口占總人口比例(%)，反映勞動力供給充足程度，數值越高表示勞動力越充沛">工作年齡人口占比 <i class="fas fa-sort"></i></th>
+                            <th onclick="sortTable(5)" title="110年度家戶綜合所得稅申報中位數(元/年)，反映居民所得水準，數值越高表示經濟條件越佳">每戶中位所得（元） <i class="fas fa-sort"></i></th>
+                            <th onclick="sortTable(6)" title="第三產業(服務業)就業人口占總就業人口比例(%)，反映產業結構現代化程度，比例越高表示經濟結構越先進">服務業占比 <i class="fas fa-sort"></i></th>
+                            <th onclick="sortTable(7)" title="綜合醫療院所密度、病床數、醫護人員數等計算的醫療服務指數，數值越高表示醫療資源越豐富">醫療資源指數 <i class="fas fa-sort"></i></th>
+                            <th onclick="sortTable(8)" title="使用Herfindahl指數衡量商業活動集中程度，數值越高表示商業發展越集中、市場競爭力越強">商業集中指數 <i class="fas fa-sort"></i></th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
@@ -92,92 +125,82 @@
             </div>
         </section>
 
-        <!-- Interactive Map Section -->
-        <section class="map-section content-section">
-            <h2>🗺️ 互動式發展潛力地圖</h2>
-            <div class="map-container-iframe">
-                <iframe src="map_interactive.html" width="100%" height="600px" style="border:1px solid #ddd; border-radius: 8px;" title="桃園市互動式發展潛力地圖"></iframe>
-            </div>
-            <p style="text-align:center; font-size:14px; margin-top:10px; color: #555;">
-                <em>在地圖上探索各行政區的詳細評估結果。可拖曳、縮放，並點擊區域查看更多資訊。<br>
-                <a href="map_interactive.html" target="_blank" style="color: #007bff; text-decoration: none;">點此在新分頁中開啟全螢幕互動式地圖</a>
-                </em>
-            </p>
-        </section>
-
-        <!-- 關鍵洞察 -->
-        <section class="insights-section">
-            <h2>💡 關鍵洞察與政策建議</h2>
-            <div class="insights-grid">
-                <div class="insight-card">
-                    <h3>🏢 高潛力區域</h3>
-                    <ul>
-                        <li>桃園核心都會區重點區域</li>
-                        <li>平均綜合分數 <span id="highAvgScore">加載中...</span> 分 (0-10制)</li>
-                        <li>醫療資源充足，產業發達，所得水平高</li>
-                        <li><strong>建議:</strong> 持續強化核心競爭力與創新產業發展</li>
-                    </ul>
-                </div>
-                <div class="insight-card">
-                    <h3>🌱 中潛力區域</h3>
-                    <ul>
-                        <li>發展中區域群組</li>
-                        <li>平均綜合分數 <span id="mediumAvgScore">加載中...</span> 分 (0-10制)</li>
-                        <li>發展程度適中，具有成長潛力</li>
-                        <li><strong>建議:</strong> 因地制宜發展特色產業，加強基礎建設</li>
-                    </ul>
-                </div>
-                <div class="insight-card">
-                    <h3>🌾 低潛力區域</h3>
-                    <ul>
-                        <li>需關注區域，可能需要政策扶持</li>
-                        <li>平均綜合分數 <span id="lowAvgScore">加載中...</span> 分 (0-10制)</li>
-                        <li>發展條件相對較弱，但有特色資源</li>
-                        <li><strong>建議:</strong> 重點投入基礎建設，發展觀光與特色農業</li>
-                    </ul>
-                </div>
-            </div>
-        </section>
+        <!-- 地圖已移動到視覺化區域，這個區塊可以移除 -->
 
         <!-- 方法說明 -->
-        <section class="methodology-section">
-            <h2>🔬 Jenks自然斷點分級方法</h2>
+        <section class="methodology-section" id="methodology">
+            <h2>潛力等級評估流程</h2>
             <div class="method-steps">
                 <div class="step">
-                    <h4>STEP 1: 數據準備</h4>
-                    <p>整合人口、商業、所得、產業、醫療等5個關鍵指標</p>
+                    <h4>STEP 1: 原始數據載入</h4>
+                    <p>載入桃園市13個行政區的多維度數據，包括人口統計、商業登記、所得分配、地理邊界及醫療資源等基礎數據文件，進行數據清理與格式標準化處理。</p>
                 </div>
                 <div class="step">
-                    <h4>STEP 2: 特徵標準化</h4>
-                    <p>使用Z-score標準化處理所有特徵</p>
+                    <h4>STEP 2: 特徵工程</h4>
+                    <p>從原始數據中提取並計算5個核心評估指標：工作年齡人口比例、家戶中位數所得、第三產業比例、醫療資源指數、商業集中度指數，並進行數據驗證與品質控制。</p>
                 </div>
                 <div class="step">
-                    <h4>STEP 3: 權重計算</h4>
-                    <p>依據選定方案設定各指標權重</p>
+                    <h4>STEP 3: 權重配置與分級</h4>
+                    <p>採用加權配置方式設定指標權重（<strong>所得 40%</strong>、<strong>醫療 30%</strong>、<strong>人口 15%</strong>、<strong>商業 10%</strong>、<strong>產業 5%</strong>），其依據在於：所得與醫療資源最能直接反映區域生活品質與發展潛力，故給予較高權重；人口結構次之，可衡量勞動力與市場規模；商業與產業則作為補充性指標，用以捕捉經濟活力。各特徵先經 Z-score 標準化，再計算加權綜合分數，最後以 Jenks Natural Breaks Classification 演算法進行三級分類，以確保類別間差異最大、類別內差異最小，得到兼具統計穩健性與解釋力的區域潛力分級結果。</p>
                 </div>
                 <div class="step">
-                    <h4>STEP 4: Jenks分級</h4>
-                    <p>使用自然斷點方法找到最優分割點，最大化組間差異、最小化組內差異</p>
+                    <h4>STEP 4: 驗證分析</h4>
+                    <p>透過統計指標驗證分級效果，包括F統計量測試、效應大小計算，以及Bootstrap穩定性測試（n=50），確保分級結果的可靠性與統計顯著性。</p>
                 </div>
                 <div class="step">
-                    <h4>STEP 5: 驗證分析</h4>
-                    <p>通過F統計量、效應大小等指標驗證分級質量</p>
+                    <h4>STEP 5: 視覺化輸出</h4>
+                    <p>生成互動式網頁儀表板，包含分級結果地圖、雷達圖特徵分析、散點圖分布展示，以及詳細的數據表格，提供完整的視覺化分析結果。</p>
                 </div>
             </div>
         </section>
 
         <!-- 頁腳 -->
         <footer class="footer">
-            <p>&copy; 2024 桃園市行政區發展潛力分析 - 3級Jenks分級 | 
-               <a href="https://github.com/mentaikoisgood/Taoyuan-District-Income-Analysis" target="_blank">
-                   GitHub Repository
-               </a>
+            <div class="data-source">
+                <p class="source-title">資料來源</p>
+                <p class="source-info">
+                    <a href="https://dbas.tycg.gov.tw/cl.aspx?n=17238" target="_blank" title="桃園市政府主計處統計年報">
+                        桃園市政府主計處-統計年報(歷年資料)
+                    </a>
+                </p>
+                <p class="source-note">
+                    本分析所用所得資料來自 110 年度綜合所得稅統計，鑑於財政部尚未公布 111 年以後資料，目前僅能採用該年度為依據。
+                </p>
+            </div>
+            <p class="copyright">
+                <span>&copy; 桃園市行政區發展潛力分析</span>
+                <a href="https://github.com/mentaikoisgood/Taoyuan-District-Income-Analysis" target="_blank" title="GitHub Repository">
+                    <i class="fab fa-github"></i>
+                </a>
             </p>
         </footer>
     </div>
 
+    <!-- 添加 Font Awesome 圖標庫 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <script src="js/jenks_data.js"></script>
     <script src="js/jenks_dashboard.js"></script>
+            <!-- 地圖標籤現在直接在地圖HTML中使用Turf.js處理 -->
     <script src="js/load_statistics.js"></script>
+    
+    <script>
+        // 確保頁面載入後正確居中
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                if (typeof scrollToCenter === 'function') {
+                    scrollToCenter();
+                }
+            }, 1000);
+        });
+        
+        // 如果頁面已經載入完成
+        if (document.readyState === 'complete') {
+            setTimeout(() => {
+                if (typeof scrollToCenter === 'function') {
+                    scrollToCenter();
+                }
+            }, 500);
+        }
+    </script>
 </body>
 </html>

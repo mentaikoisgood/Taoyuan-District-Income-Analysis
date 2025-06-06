@@ -1,127 +1,300 @@
-# 桃園市行政區發展潛力分析
+# 桃園市行政區發展潛力分析系統
 
-本專案分析桃園市13個行政區的發展潛力，通過整合人口、商業、所得、地理和醫療等多維度數據，使用機器學習方法進行聚類分析，最終將行政區分為高、中、低三種發展潛力等級。
+本專案對桃園市13個行政區進行綜合發展潛力分析，使用多維度數據整合與Jenks自然斷點分級方法，將行政區分為高、中、低三個發展潛力等級。專案包含完整的數據處理管道和互動式網頁儀表板。
 
-## 專案流程
+## 🎯 專案特色
 
-### STEP 1：原始數據收集與載入
-- 收集桃園市13個行政區的人口、商業、所得、地理和醫療等數據
-- 使用pandas讀取Excel/CSV格式數據
-- 處理各種數據格式問題，如編碼、表頭、缺失值等
-- 相關檔案：`step1_raw_data_loader.py`
+- **多維度數據整合**：人口、商業、所得、地理、醫療等5大類數據
+- **科學分級方法**：使用Jenks自然斷點進行客觀分級
+- **完整數據管道**：從原始數據載入到網頁視覺化的完整流程
+- **互動式儀表板**：提供豐富的視覺化和查詢功能
+- **穩定性驗證**：Bootstrap測試確保分級結果的可靠性
 
-### STEP 2：特徵工程與數據整合
-- 從原始數據中提取關鍵特徵
-- 處理偏態分布數據（使用對數轉換）
-- 創建綜合指標（如醫療服務指數）
-- 標準化特徵以便比較
-- 最終保留5個關鍵特徵：
-  - 人口_working_age_ratio：勞動年齡人口比例
-  - 商業_hhi_index：商業集中度指數
-  - 所得_median_household_income：家庭收入中位數
-  - tertiary_industry_ratio：第三產業比例
-  - medical_index：醫療服務綜合指數
-- 相關檔案：`step2_feature_engineering.py`
+## 📊 分析流程
 
-### STEP 3：聚類分析與標籤生成
-- 使用t-SNE降維+Ward層次聚類方法
-- 將13個行政區分為3個集群
-- 基於所得水平和產業結構為集群賦予意義：
-  - 高發展潛力：中壢區、桃園區、龜山區、蘆竹區
-  - 中發展潛力：八德區、大園區、平鎮區、楊梅區、龍潭區
-  - 低發展潛力：大溪區、復興區、新屋區、觀音區
-- 相關檔案：`step3_clustering_and_labeling.py`
+### STEP 1：原始數據載入 (`step1_raw_data_loader.py`)
 
-### STEP 4：模型驗證與解釋
-- 使用輪廓係數(Silhouette Score)評估聚類質量：0.718（優秀）
-- 使用Davies-Bouldin指數評估：0.545（良好）
-- 通過決策樹分析重要特徵：所得是最關鍵的分類依據
-- 生成分類規則：
-  - 所得≤435,500元 → 低發展潛力
-  - 435,500元<所得≤478,000元 → 中發展潛力
-  - 所得>478,000元 → 高發展潛力
-- 使用箱型圖和雷達圖可視化各群組特徵分布
-- 相關檔案：`step4_cluster_validation_interpretation.py`
+**功能概述**：載入並初步清理桃園市13個行政區的多維度數據
 
-### STEP 5：互動式網頁儀表板部署
-- 創建HTML/CSS/JavaScript網頁儀表板
-- 整合分析結果與視覺化圖表
-- 提供互動式功能：
-  - 行政區潛力等級查詢
-  - 特徵對比分析
-  - 聚類結果視覺化
-  - 政策建議展示
-- 部署到GitHub Pages實現線上訪問
-- 儀表板網址：https://mentaikoisgood.github.io/Taoyuan-District-Income-Analysis/
-- 相關檔案：`docs/` 目錄（包含HTML、CSS、JS文件）
+**主要功能**：
+- **人口數據**：110年桃園市人口數按性別及年齡分布
+- **商業數據**：110年12月底商業行業別及行政區域家數
+- **所得數據**：110年所得分配統計
+- **地理數據**：桃園市行政區地理邊界資料
+- **公共建設**：110桃園市公共建設統計
+- **醫療數據**：110桃園市衛生醫療資源
 
-## 安裝與使用
+**數據清理**：
+- 統一編碼格式（UTF-8、Big5相容）
+- 處理缺失值和異常值
+- 標準化行政區名稱格式
+- 數值型態轉換和驗證
+
+**輸出**：`temp_data/` 目錄下的清理後CSV文件
+
+### STEP 2：特徵工程 (`step2_feature_engineering.py`)
+
+**功能概述**：從原始數據中提取並構建分析用特徵
+
+**核心特徵**（5個關鍵指標）：
+1. **人口_working_age_ratio**：工作年齡人口比例（15-64歲）
+2. **商業_hhi_index**：商業集中度指數（Herfindahl指數）
+3. **所得_median_household_income**：家戶中位數所得
+4. **tertiary_industry_ratio**：第三產業（服務業）比例
+5. **medical_index**：醫療服務綜合指數
+
+**進階特徵**：
+- 衍生經濟指標：人均資本額、工廠密度
+- 醫療密度指標：每千人病床數、醫護人員比例
+- 空間特徵：行政區面積、人口密度
+
+**數據預處理**：
+- Z-score標準化
+- 偏態分布處理（對數轉換）
+- 異常值檢測與處理
+
+**輸出**：`output/taoyuan_features_enhanced.csv`
+
+### STEP 3：Jenks分級分析 (`step3_ranking_classification.py`)
+
+**功能概述**：使用Jenks自然斷點方法進行3級分級
+
+**分級方法**：
+- **Jenks Natural Breaks**：自動找出數據的自然分組邊界
+- **加權綜合評分**：基於專家權重配置的綜合分數計算
+- **3級分類**：高潛力、中潛力、低潛力
+
+**權重配置**（妥協方案第37個配置）：
+```
+所得_median_household_income: 40% (高權重)
+醫療指數 (medical_index): 30% (高權重)
+工作年齡人口比例: 15% (中權重)
+商業集中度指數: 10% (低權重，反向)
+第三產業比例: 5% (低權重)
+```
+
+**分級結果**：
+- 自動計算最優分割點
+- 0-10分制綜合評分
+- 排名與等級標籤
+
+**輸出**：
+- `output/3_level_jenks_results.csv`：分級結果
+- `output/3_level_jenks_config.json`：分級配置
+
+### STEP 4：分級驗證與分析 (`step4_validation.py`)
+
+**功能概述**：全面驗證分級結果的有效性和穩定性
+
+**質量分析**：
+- **組內外方差分析**：評估分級的統計顯著性
+- **F統計量**：測量組間差異的顯著程度
+- **效應大小(η²)**：量化分級效果
+
+**穩定性測試**：
+- **Bootstrap穩定性測試**（n=100）：評估分級的一致性
+- **敏感性分析**：測試權重變化對結果的影響
+- **相關性分析**：驗證分級的穩定性
+
+**視覺化分析**：
+- 分級結果箱型圖
+- 特徵分布熱力圖
+- 相關性矩陣
+- 敏感性分析圖表
+
+**評估報告**：
+- 詳細的統計分析報告
+- 分級質量指標
+- 穩定性測試結果
+
+**輸出**：`output/` 目錄下的分析圖表和報告
+
+### STEP 5：網頁儀表板生成 (`step5_visualization.py`)
+
+**功能概述**：生成互動式網頁儀表板的數據和視覺化
+
+**地圖功能**：
+- **靜態地圖**：行政區分級結果choropleth地圖
+- **互動地圖**：Folium製作的可互動地圖
+- **地理統計**：各級別的空間分布分析
+
+**儀表板數據**：
+- **分級統計**：各等級區域數量和平均分數
+- **區域詳情**：每個行政區的完整資訊
+- **雷達圖數據**：特徵標準化後的視覺化資料
+- **散點圖數據**：排名與分數的關係視覺化
+
+**網頁更新**：
+- 自動更新HTML檔案的數據引用
+- 生成JSON格式的前端數據
+- 整合地圖和統計圖表
+
+**輸出**：
+- `docs/` 目錄：GitHub Pages網頁文件
+- 靜態地圖PNG文件
+- 前端JSON數據文件
+
+## 🚀 安裝與使用
+
+### 環境需求
 
 ```bash
-# 克隆倉庫
-git clone https://github.com/mentaikoisgood/Taoyuan-District-Income-Analysis.git
-cd Taoyuan-District-Income-Analysis
+Python 3.8+
+pandas >= 1.3.0
+numpy >= 1.21.0
+scikit-learn >= 1.0.0
+jenkspy >= 0.2.0
+geopandas >= 0.10.0
+folium >= 0.12.0
+matplotlib >= 3.4.0
+seaborn >= 0.11.0
+```
 
-# 安裝依賴
+### 快速開始
+
+```bash
+# 1. 克隆專案
+git clone [你的倉庫URL]
+cd dm_final
+
+# 2. 安裝相依套件
 pip install -r requirements.txt
 
-# 執行各步驟
-python step1_raw_data_loader.py  # 數據載入
+# 3. 準備數據文件（放置於 data/ 目錄）
+# - 110年桃園市人口數按性別及年齡分.xlsx
+# - 110_income_by_district.csv
+# - taoyuan_districts.geojson
+# - 110年12月底商業行業別及行政區域家數.csv
+# - 110桃園市公共建設.xlsx
+# - 110桃園市衛生.xlsx
+
+# 4. 執行完整分析管道
+python step1_raw_data_loader.py     # 數據載入與清理
 python step2_feature_engineering.py  # 特徵工程
-python step3_clustering_and_labeling.py  # 聚類分析
-python step4_cluster_validation_interpretation.py  # 模型驗證
+python step3_ranking_classification.py  # Jenks分級
+python step4_validation.py         # 驗證分析
+python step5_visualization.py      # 網頁儀表板生成
 
-# 查看網頁儀表板
-# 訪問：https://mentaikoisgood.github.io/Taoyuan-District-Income-Analysis/
+# 5. 查看結果
+# 分析結果：output/ 目錄
+# 網頁儀表板：docs/index.html
 ```
 
-## 數據來源
+### 個別步驟執行
 
-- 人口資料：桃園市政府民政局
-- 商業資料：桃園市政府經濟發展局
-- 所得資料：財政部財政資訊中心
-- 地理資料：內政部國土測繪中心
-- 醫療資料：衛生福利部
+```bash
+# 只執行特定步驟
+python step1_raw_data_loader.py  # 基礎數據載入
+python step2_feature_engineering.py  # 進階特徵工程
+python step3_ranking_classification.py  # 快速分級
+python step4_validation.py  # 深度驗證
+python step5_visualization.py  # 網頁生成
+```
 
-## 主要發現
-
-1. 桃園市13個行政區可明確分為三類發展潛力群組
-2. 中壢區和桃園區為核心商業中心，具有最高的發展潛力
-3. 家庭收入中位數是區分發展潛力的最關鍵指標
-4. 第三產業比例與醫療服務水平與發展潛力高度相關
-
-## 線上儀表板
-
-🌐 **[立即體驗互動式儀表板](https://mentaikoisgood.github.io/Taoyuan-District-Income-Analysis/)**
-
-儀表板功能包括：
-- 📊 行政區發展潛力地圖
-- 📈 特徵分析雷達圖
-- 🔍 聚類結果互動視覺化
-- 📋 詳細數據查詢表格
-- 💡 政策建議與洞察
-
-## 專案結構
+## 📁 專案結構
 
 ```
-├── docs/                      # GitHub Pages 網頁檔案
-│   ├── index.html             # 儀表板主頁
-│   ├── css/
-│   │   └── style.css          # 樣式檔案
-│   ├── js/
-│   │   ├── dashboard.js       # 儀表板邏輯
-│   │   └── data.js           # 數據處理
-│   └── data/                 # 前端數據檔案
-├── output/                    # 分析結果
-│   ├── taoyuan_features_enhanced.csv  # 增強特徵數據
-│   ├── taoyuan_features_numeric.csv   # 基礎數值特徵
-│   ├── clustering_results.csv        # 聚類結果
-│   ├── taoyuan_enhanced_meta.json     # 元數據
-│   └── visualization/                 # 靜態圖表
-├── temp_data/                 # 臨時處理數據
-├── step1_raw_data_loader.py   # 數據載入腳本
-├── step2_feature_engineering.py  # 特徵工程腳本
-├── step3_clustering_and_labeling.py  # 聚類分析腳本
-├── step4_cluster_validation_interpretation.py  # 模型驗證腳本
-└── README.md                  # 本文件
+dm_final/
+├── data/                           # 原始數據文件
+│   ├── 110年桃園市人口數按性別及年齡分.xlsx
+│   ├── 110_income_by_district.csv
+│   ├── taoyuan_districts.geojson
+│   ├── 110年12月底商業行業別及行政區域家數.csv
+│   ├── 110桃園市公共建設.xlsx
+│   └── 110桃園市衛生.xlsx
+├── temp_data/                      # 臨時處理數據
+├── output/                         # 分析結果
+│   ├── taoyuan_features_enhanced.csv   # 特徵工程結果
+│   ├── 3_level_jenks_results.csv      # Jenks分級結果
+│   ├── 3_level_jenks_config.json      # 分級配置
+│   └── *.png                          # 分析圖表
+├── docs/                           # GitHub Pages網頁
+│   ├── index.html                  # 儀表板主頁
+│   ├── data/                       # 前端數據
+│   └── static/                     # 靜態資源
+├── step1_raw_data_loader.py        # 數據載入腳本
+├── step2_feature_engineering.py    # 特徵工程腳本
+├── step3_ranking_classification.py # 分級分析腳本
+├── step4_validation.py            # 驗證分析腳本
+├── step5_visualization.py         # 視覺化腳本
+├── requirements.txt               # 相依套件
+└── README.md                      # 專案說明
 ```
+
+## 📊 分級結果
+
+### 高潛力區域
+- **特徵**：高所得、優質醫療資源、活躍經濟活動
+- **代表區域**：中壢區、桃園區等核心商業區
+
+### 中潛力區域  
+- **特徵**：中等所得、穩定發展、平衡的產業結構
+- **代表區域**：八德區、平鎮區等發展中區域
+
+### 低潛力區域
+- **特徵**：相對偏遠、所得較低、有發展空間
+- **代表區域**：復興區、新屋區等外圍區域
+
+## 🌐 線上儀表板
+
+**[🔗 立即體驗互動式儀表板](docs/index.html)**
+
+### 儀表板功能
+
+- 📍 **互動地圖**：點擊查看各行政區詳細資訊
+- 📈 **雷達圖分析**：比較不同區域的特徵表現
+- 📊 **統計圖表**：分級分布和特徵重要性
+- 🔍 **資料查詢**：搜尋和篩選功能
+- 📋 **詳細報告**：完整的分析結果展示
+
+## 🔬 技術特點
+
+### 分級方法
+- **Jenks自然斷點**：自動識別數據的自然分組
+- **多維度綜合評估**：整合5大類關鍵指標
+- **權重優化**：基於專家知識的權重配置
+
+### 驗證機制
+- **統計顯著性檢驗**：F統計量和效應大小
+- **Bootstrap穩定性測試**：評估結果一致性
+- **敏感性分析**：測試參數變化的影響
+
+### 視覺化技術
+- **地理視覺化**：Choropleth地圖和互動地圖
+- **統計圖表**：雷達圖、箱型圖、熱力圖
+- **響應式設計**：適配各種螢幕尺寸
+
+## 📈 主要發現
+
+1. **所得指標最關鍵**：家戶中位數所得是區分發展潛力的最重要因素
+2. **醫療資源重要**：醫療指數與發展潛力高度相關
+3. **均衡發展**：各區域在不同指標上各有優勢
+4. **空間聚集**：高潛力區域主要集中在核心都市區
+5. **發展機會**：低潛力區域具有改善和成長空間
+
+## 🎯 應用場景
+
+- **政策制定**：協助政府制定區域發展策略
+- **投資決策**：為投資者提供區域潛力評估
+- **學術研究**：作為區域發展研究的參考框架
+- **民眾了解**：幫助民眾了解各行政區特色
+
+## 📄 數據來源
+
+- **人口資料**：桃園市政府民政局
+- **商業資料**：桃園市政府經濟發展局  
+- **所得資料**：財政部財政資訊中心
+- **地理資料**：內政部國土測繪中心
+- **醫療資料**：衛生福利部
+
+## 🤝 貢獻指南
+
+歡迎提交Issue和Pull Request來改進這個專案！
+
+## 📜 授權條款
+
+MIT License - 詳見LICENSE文件
+
+---
+
+*本專案旨在提供客觀、科學的區域發展潛力分析，結果僅供參考，不作為任何投資或決策的唯一依據。*

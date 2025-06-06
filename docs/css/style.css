@@ -1,437 +1,1294 @@
-/* 重置和基礎樣式 */
+/* Material Design 暗色風格的桃園市行政區發展潛力分析儀表板 */
+
+:root {
+    /* 改進的暗色模式色彩系統 */
+    --primary-color: #64b5f6;           /* 主要藍色 */
+    --primary-light: #bbdefb;           /* 淺藍色 */
+    --primary-dark: #1976d2;            /* 深藍色 */
+    
+    /* 分層背景系統 - 改善對比度 */
+    --background-color: #1F2025;        /* 外層深色背景 */
+    --surface-color: #2B2E38;           /* 中層表面色 */
+    --card-color: #2B2E38;              /* 卡片背景 - 與外層有明顯對比 */
+    --card-hover-color: #323644;        /* 卡片hover狀態 */
+    --card-active-color: #3A3F52;       /* 卡片active狀態 */
+    
+    /* 文字對比度優化 */
+    --text-primary: #FFFFFF;            /* 純白主要文字 */
+    --text-secondary: #E0E0E0;          /* 次要文字 */
+    --text-hint: #B0B0B0;              /* 提示文字 */
+    --text-emphasis: #FFC542;           /* 強調文字（黃色高亮） */
+    
+    /* 分隔與邊框 */
+    --divider-color: rgba(255,255,255,0.1);  /* 半透明分隔線 */
+    --border-color: rgba(255,255,255,0.15);  /* 邊框色 */
+    --border-focus: rgba(255,255,255,0.3);   /* 聚焦邊框 */
+    
+    /* 恢復原來的潛力等級顏色 - 提高透明度 */
+    --high-potential: rgba(235, 112, 98, 0.7);   /* 高潛力 - 更柔和的紅色 */
+    --medium-potential: rgba(245, 176, 65, 0.7); /* 中潛力 - 更柔和的橙色 */
+    --low-potential: rgba(92, 172, 226, 0.7);    /* 低潛力 - 更柔和的藍色 */
+    
+    /* 語意色彩的hover狀態 */
+    --high-potential-hover: rgba(235, 112, 98, 0.85);
+    --medium-potential-hover: rgba(245, 176, 65, 0.85);
+    --low-potential-hover: rgba(92, 172, 226, 0.85);
+    
+    /* 統一陰影系統 */
+    --shadow-card: 0 2px 8px rgba(0,0,0,0.2);
+    --shadow-elevated: 0 4px 16px rgba(0,0,0,0.3);
+    --shadow-floating: 0 8px 32px rgba(0,0,0,0.4);
+    
+    /* 統一圓角系統 */
+    --border-radius: 8px;
+    --border-radius-large: 12px;
+    --border-radius-xl: 16px;
+    
+    /* 統一間距系統 */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+    --spacing-xxl: 48px;
+    --spacing-section: 56px;      /* Section間的統一間距 */
+}
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
+html {
+    overflow-x: hidden;                  /* 防止水平滾動 */
+}
+
 body {
-    font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
+    font-family: 'Roboto', 'Noto Sans TC', 'Microsoft JhengHei', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-primary);
     line-height: 1.6;
-    color: #333;
+    scroll-behavior: smooth;             /* 平滑滾動 */
+    padding-top: 15vh;                   /* 增加頂部空間方便居中 */
+    padding-bottom: 10vh;                /* 增加底部空間 */
+    overflow-x: hidden;                  /* 防止水平滾動 */
+}
+
+/* 錨點導航系統 */
+.anchor-nav {
+    position: fixed;
+    top: 50%;
+    right: var(--spacing-lg);
+    transform: translateY(-50%);
+    z-index: 1000;
+    background: var(--card-color);
+    border-radius: var(--border-radius-xl);
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-floating);
+    border: 1px solid var(--border-color);
+    opacity: 0.9;
+    transition: opacity 0.3s ease;
+}
+
+.anchor-nav:hover {
+    opacity: 1;
+}
+
+.nav-item {
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin: var(--spacing-xs) 0;
+    border-radius: var(--border-radius);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    min-width: 60px;
+}
+
+.nav-item:hover {
+    background: var(--card-hover-color);
+    color: var(--text-primary);
+}
+
+.nav-item.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+/* 響應式導航調整 - 改為始終顯示但調整位置 */
+@media (max-width: 768px) {
+    .anchor-nav {
+        right: var(--spacing-sm);
+        padding: var(--spacing-sm);
+        min-width: 50px;
+    }
+    
+    .nav-item {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        font-size: 0.75rem;
+        min-width: 50px;
+    }
 }
 
 .container {
-    max-width: 1400px;
+    max-width: 1200px;       /* 調整為更合理的寬度 */
     margin: 0 auto;
     padding: 20px;
+    min-height: 100vh;       /* 確保有足夠高度進行滾動 */
+    width: 100%;             /* 確保響應式 */
+}
+
+/* 確保內容寬度一致性 */
+.metrics-cards {
+    width: 100%;
+    max-width: 1200px;       /* 與容器一致 */
+    margin: 0 auto;          /* 居中對齊 */
+}
+
+/* 表格容器與metrics-cards保持一致寬度 */
+.table-container {
+    width: 100%;
+    max-width: 1200px;       /* 與其他容器一致 */
+    margin: 0 auto;
+    overflow-x: auto;        /* 備用滾動 */
 }
 
 /* 標題區域 */
+/* 統一Section樣式組件 */
+.content-section {
+    margin-bottom: var(--spacing-section);   /* 統一Section間距 */
+}
+
 .header {
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 15px;
-    padding: 30px;
+    width: 100%;
+    max-width: 1200px;       /* 與其他容器一致 */
+    margin: 0 auto var(--spacing-section) auto;  /* 居中並保持底部間距 */
+    background: var(--surface-color);
+    border-radius: var(--border-radius-large);
+    box-shadow: var(--shadow-card);
+    padding: var(--spacing-xxl);            /* 統一48px內距 */
     text-align: center;
-    margin-bottom: 30px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(10px);
+    border: 1px solid var(--border-color);
+    box-sizing: border-box;                  /* 確保padding包含在寬度內 */
 }
 
+/* 明確的Typography Scale層次系統 */
 .header h1 {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: #2c3e50;
-    margin-bottom: 10px;
+    color: var(--text-primary);      /* 改為無彩色白色文字 */
+    font-size: 2.5rem;              /* 40px - 主標題 */
+    font-weight: 600;
+    margin-bottom: var(--spacing-md);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    line-height: 1.2;
 }
 
-.subtitle {
-    font-size: 1.1rem;
-    color: #7f8c8d;
+.header .subtitle {
+    color: var(--text-secondary);
+    font-size: 1.125rem;            /* 18px - 明顯層級差異 */
+    font-weight: 400;
+    line-height: 1.5;
+    opacity: 0.9;                   /* 進一步降低視覺權重 */
 }
 
-/* 指標卡片 */
+/* 指標卡片 - 真正的3欄響應式布局 */
 .metrics-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
+    grid-template-columns: repeat(3, 1fr);  /* 大螢幕：強制3欄等寬 */
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-section);   /* 統一Section間距 */
+    perspective: 1000px;
+}
+
+/* 響應式斷點優化 */
+@media (max-width: 1024px) {
+    .metrics-cards {
+        grid-template-columns: repeat(2, 1fr);  /* 平板：2欄 */
+    }
+}
+
+@media (max-width: 640px) {
+    .metrics-cards {
+        grid-template-columns: 1fr;            /* 手機：單欄 */
+    }
 }
 
 .card {
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 15px;
-    padding: 25px;
-    text-align: center;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border-radius: var(--border-radius-xl);    /* 統一16px圓角 */
+    box-shadow: var(--shadow-card);             /* 統一陰影 */
+    padding: var(--spacing-lg);                 /* 統一24px內距 */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    min-height: 200px;                          /* 設置最小高度 */
+    display: flex;
+    flex-direction: column;                     /* 垂直佈局 */
+}
+
+/* 潛力等級卡片顏色 */
+.card.high-potential {
+    background: var(--high-potential);
+}
+
+.card.medium-potential {
+    background: var(--medium-potential);
+}
+
+.card.low-potential {
+    background: var(--low-potential);
+}
+
+/* 改進的hover狀態 - 根據潛力等級使用對應顏色 */
+.card.high-potential:hover {
+    background: rgba(235, 112, 98, 0.9);      /* 高潛力hover顏色 */
+    box-shadow: var(--shadow-elevated);
+    transform: translateY(-4px);
+    border-color: var(--border-focus);
+}
+
+.card.medium-potential:hover {
+    background: rgba(245, 176, 65, 0.9);      /* 中潛力hover顏色 */
+    box-shadow: var(--shadow-elevated);
+    transform: translateY(-4px);
+    border-color: var(--border-focus);
+}
+
+.card.low-potential:hover {
+    background: rgba(92, 172, 226, 0.9);      /* 低潛力hover顏色 */
+    box-shadow: var(--shadow-elevated);
+    transform: translateY(-4px);
+    border-color: var(--border-focus);
+}
+
+/* Active狀態 - 選中效果 */
+.card:active,
+.card.selected {
+    background: var(--card-active-color);
+    transform: translateY(-2px);
+    transition: transform 0.1s ease;
+}
+
+/* 潛力等級卡片的選中狀態邊框 */
+.card.high-potential.selected {
+    border-color: var(--high-potential);
+    box-shadow: var(--shadow-elevated), 0 0 0 2px var(--high-potential);
+}
+
+.card.medium-potential.selected {
+    border-color: var(--medium-potential);
+    box-shadow: var(--shadow-elevated), 0 0 0 2px var(--medium-potential);
+}
+
+.card.low-potential.selected {
+    border-color: var(--low-potential);
+    box-shadow: var(--shadow-elevated), 0 0 0 2px var(--low-potential);
+}
+
+/* 刪除卡片上方的彩色條紋 */
+.card::before {
+    display: none;
+}
+
+/* 統一卡片外框樣式 */
+
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;           /* 水平置中 */
+    margin-bottom: var(--spacing-lg);
+    gap: var(--spacing-sm);
+}
+
+.card-icon {
+    font-size: 1.4rem;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    color: var(--text-primary);
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
 }
 
-.card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+/* 統一所有卡片圖標樣式，不再區分潛力等級 */
+.card:hover .card-icon {
+    transform: rotate(360deg);
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 6px 20px rgba(255, 255, 255, 0.15);
 }
 
-/* 3級Jenks分級卡片顏色 */
-.high-potential {
-    border-left: 5px solid #2E8B57;
-}
-
-.medium-potential {
-    border-left: 5px solid #FFA500;
-}
-
-.low-potential {
-    border-left: 5px solid #DC143C;
-}
-
+/* 卡片標題 - H3層級 */
 .card h3 {
-    font-size: 1.2rem;
-    margin-bottom: 15px;
-    color: #2c3e50;
+    font-size: 1.25rem;                 /* 20px H3 */
+    font-weight: 500;
+    margin: 0 0 var(--spacing-md) 0;    /* 統一16px底部間距 */
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);             /* icon與文字間距 */
 }
 
+/* 數值強調顯示 - 置中對齊 */
 .metric-value {
-    font-size: 3rem;
+    font-size: 3rem;                    /* 48px 大數字 */
     font-weight: 700;
-    color: #2c3e50;
-    margin-bottom: 5px;
+    color: var(--text-primary);         /* 改為無彩色白色 */
+    margin-bottom: var(--spacing-xs);   /* 4px間距 */
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    line-height: 1;
+    transition: transform 0.3s ease;
+    display: block;
+    text-align: center;                 /* 數字置中 */
 }
 
+.card:hover .metric-value {
+    transform: scale(1.05);             /* 適度放大 */
+    color: var(--text-emphasis);        /* hover時變黃色強調 */
+}
+
+/* 數值標籤 - 置中對齊 */
 .metric-label {
-    font-size: 1rem;
-    color: #7f8c8d;
-    margin-bottom: 15px;
+    font-size: 0.875rem;                /* 14px body text */
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-md);   /* 16px底部間距 */
+    font-weight: 400;
+    line-height: 1.4;
+    text-align: center;                 /* 標籤置中 */
+}
+
+/* 分隔線 - 標題與內容之間 */
+.card-header::after {
+    content: '';
+    position: absolute;
+    left: var(--spacing-lg);
+    right: var(--spacing-lg);
+    height: 1px;
+    background: var(--divider-color);
+    margin-top: var(--spacing-md);
+}
+
+.districts-container {
+    margin-top: var(--spacing-md);       /* 統一間距 */
+    flex-grow: 1;                        /* 填充剩餘空間 */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;           /* 內容對齊到底部 */
+}
+
+.districts-title {
+    font-size: 0.8rem;                  /* 稍微縮小字體 */
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-bottom: 1px;                  /* 更緊密的間距 */
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .districts-list {
-    font-size: 0.9rem;
-    color: #5a6c7d;
-    padding: 10px;
-    background: rgba(52, 152, 219, 0.1);
-    border-radius: 8px;
+    font-size: 0.85rem;                  /* 稍微縮小字體 */
+    color: var(--text-secondary);        /* 改為次要文字色 */
+    line-height: 1.2;                    /* 更緊密的行高 */
+    padding: 4px 0;                      /* 減少padding */
+    display: flex;                       /* 使用flexbox */
+    flex-wrap: wrap;                     /* 允許換行 */
+    justify-content: flex-start;         /* 左對齊 */
+    gap: 6px;                           /* 行政區之間6px間距 */
+    max-width: 100%;                    /* 確保不超出卡片寬度 */
 }
 
-/* 主要內容區域 */
-.main-content {
+/* 移除行政區列表的左側條紋樣式 */
+
+/* 視覺化分析區域 */
+.visualization-section {
+    margin-bottom: var(--spacing-section);
+}
+
+.visualization-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 30px;
-    margin-bottom: 30px;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
 }
 
+/* 響應式調整 */
+@media (max-width: 768px) {
+    .visualization-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+    }
+}
+
+/* 統一圖表區域樣式 */
 .chart-section {
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 15px;
-    padding: 25px;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(10px);
+    background: var(--card-color);
+    border-radius: var(--border-radius-xl);      /* 統一16px圓角 */
+    box-shadow: var(--shadow-card);              /* 統一陰影 */
+    padding: var(--spacing-lg);                  /* 統一24px內距 */
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.chart-section:hover {
+    box-shadow: var(--shadow-elevated);
 }
 
 .chart-section h2 {
-    font-size: 1.5rem;
-    color: #2c3e50;
-    margin-bottom: 20px;
-    border-bottom: 2px solid #3498db;
-    padding-bottom: 10px;
+    font-size: 1.375rem;                         /* 22px - H2層級 */
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-lg);            /* 統一24px間距 */
+    padding-bottom: var(--spacing-md);           /* 16px內距 */
+    border-bottom: 1px solid var(--divider-color);
+    position: relative;
+}
+
+/* H2標題底線增強效果 */
+.chart-section h2::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 60px;
+    height: 2px;
+    background: var(--primary-color);
 }
 
 .chart-container {
     position: relative;
     height: 400px;
-    margin-bottom: 15px;
+    margin-bottom: 16px;
 }
 
 .chart-info {
-    font-size: 0.9rem;
-    color: #7f8c8d;
-    text-align: center;
+    padding: 16px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
 }
 
+.chart-info p {
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.chart-info p:last-child {
+    margin-bottom: 0;
+}
+
+.chart-info strong {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* 統計指標tooltip */
+.tooltip-trigger {
+    cursor: help;
+    position: relative;
+    border-bottom: 1px dotted var(--text-secondary);
+    transition: all 0.3s ease;
+}
+
+.tooltip-trigger:hover {
+    border-bottom-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.tooltip-trigger::after {
+    content: attr(title);
+    position: absolute;
+    bottom: calc(100% + 8px);           /* 調整位置 */
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--card-color);      /* 改為卡片背景色，對比更好 */
+    color: var(--text-primary);
+    padding: 16px 20px;                 /* 增加padding給更多空間 */
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-focus);  /* 使用聚焦邊框色 */
+    box-shadow: var(--shadow-floating); /* 使用更強的陰影 */
+    white-space: pre-line;              /* 支援換行符顯示 */
+    max-width: 400px;                   /* 增加最大寬度 */
+    width: max-content;
+    z-index: 9999;                      /* 提高層級 */
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;          /* 縮短動畫時間 */
+    font-size: 0.85rem;                 /* 稍微增大字體 */
+    line-height: 1.6;                   /* 增加行高 */
+    pointer-events: none;               /* 防止tooltip影響hover */
+    text-align: left;                   /* 左對齊 */
+    word-break: keep-all;               /* 保持中文詞彙完整 */
+    overflow-wrap: break-word;          /* 允許長詞換行 */
+}
+
+.tooltip-trigger:hover::after {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* 改進的雷達圖控制項 */
 .radar-controls {
-    margin-bottom: 20px;
+    margin-bottom: var(--spacing-lg);
 }
 
 .radar-controls select {
     width: 100%;
-    padding: 12px;
-    border: 2px solid #ddd;
-    border-radius: 8px;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background-color: var(--card-color);     /* 統一卡片背景色 */
+    color: var(--text-primary);
     font-size: 1rem;
-    background: white;
-    transition: border-color 0.3s ease;
+    font-family: inherit;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    
+    /* 自定義箭頭樣式 */
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right var(--spacing-md) center;
+    background-size: 16px;
+    padding-right: 48px;
+}
+
+.radar-controls select:hover {
+    background-color: var(--card-hover-color);
+    border-color: var(--border-focus);
 }
 
 .radar-controls select:focus {
     outline: none;
-    border-color: #3498db;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(100, 181, 246, 0.1);
 }
 
-/* 數據表格 */
+/* 統一數據表格樣式 */
 .data-table-section {
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 15px;
-    padding: 25px;
-    margin-bottom: 30px;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(10px);
+    background: var(--card-color);
+    border-radius: var(--border-radius-xl);      /* 統一16px圓角 */
+    box-shadow: var(--shadow-card);              /* 統一陰影 */
+    padding: var(--spacing-lg);                  /* 統一24px內距 */
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+    margin-bottom: var(--spacing-xl);            /* 統一32px底部間距 */
+}
+
+.data-table-section:hover {
+    box-shadow: var(--shadow-elevated);
 }
 
 .data-table-section h2 {
-    font-size: 1.5rem;
-    color: #2c3e50;
+    font-size: 1.375rem;                         /* 22px - H2層級 */
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-lg);            /* 統一24px間距 */
+    padding-bottom: var(--spacing-md);           /* 16px內距 */
+    border-bottom: 1px solid var(--divider-color);
+    position: relative;
+}
+
+/* H2標題底線增強效果 */
+.data-table-section h2::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 60px;
+    height: 2px;
+    background: var(--primary-color);
+}
+
+/* 表格圖例 */
+.table-legend {
+    display: flex;
+    gap: 24px;
     margin-bottom: 20px;
-    border-bottom: 2px solid #3498db;
-    padding-bottom: 10px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.high-legend .legend-color {
+    background: var(--high-potential);
+}
+
+.medium-legend .legend-color {
+    background: var(--medium-potential);
+}
+
+.low-legend .legend-color {
+    background: var(--low-potential);
+}
+
+.legend-text {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 500;
 }
 
 .table-container {
     overflow-x: auto;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
 }
 
 table {
-    width: 100%;
+    width: auto;                             /* 改為自動寬度 */
+    min-width: 1300px;                       /* 增加最小寬度確保完整顯示 */
     border-collapse: collapse;
-    margin-top: 15px;
+    background: var(--surface-color);
 }
 
-th, td {
-    padding: 12px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
+/* 響應式表格優化 - 維持內容完整性 */
+@media (max-width: 1300px) {
+    .container,
+    .metrics-cards,
+    .table-container,
+    .header,
+    .method-steps {
+        max-width: 1100px;                  /* 保持一致寬度 */
+    }
+    
+    table {
+        min-width: 1050px;                  /* 保持表格可讀性 */
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 1200px) {
+    table {
+        min-width: 1000px;                  /* 適度縮小 */
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .container,
+    .metrics-cards {
+        max-width: 100%;
+        padding: 10px;
+    }
+    
+    .table-container {
+        max-width: none;
+        width: 100%;
+        margin: 0;
+    }
+    
+    table {
+        min-width: 900px;                   /* 小螢幕時也保持足夠寬度 */
+        font-size: 0.8rem;
+    }
+    
+    th, td {
+        padding: 8px 6px;
+    }
+    
+    th:nth-child(n+5) {
+        font-size: 0.75rem;
+    }
+}
+
+thead {
+    background-color: rgba(144, 202, 249, 0.1);
 }
 
 th {
-    background: #f8f9fa;
-    font-weight: 600;
-    color: #2c3e50;
-}
-
-tr:nth-child(even) {
-    background: #f8f9fa;
-}
-
-tr:hover {
-    background: #e3f2fd;
+    padding: 18px 12px;                     /* 增加內距提升視覺品質 */
+    text-align: left;
+    font-weight: 600;                       /* 加粗標題 */
+    color: var(--text-primary);
+    font-size: 0.9rem;                      /* 增加字體大小 */
+    border-bottom: 2px solid var(--divider-color);
     cursor: pointer;
+    user-select: none;
+    transition: all 0.3s ease;              /* 擴展transition效果 */
+    white-space: nowrap;                    /* 防止換行 */
+    min-width: 100px;                       /* 設定最小寬度 */
+    position: relative;                     /* 為tooltip定位 */
+    background: linear-gradient(135deg, rgba(144, 202, 249, 0.08), rgba(144, 202, 249, 0.12)); /* 微妙漸變背景 */
 }
 
-/* 3級Jenks分級表格行樣式 */
-.high-potential-row {
-    border-left: 4px solid #2E8B57;
-}
-
-.medium-potential-row {
-    border-left: 4px solid #FFA500;
-}
-
-.low-potential-row {
-    border-left: 4px solid #DC143C;
-}
-
-/* 級別標籤樣式 */
-.level-badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 20px;
+/* 表格標題專用tooltip */
+th[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    top: calc(100% + 8px);                  /* 在標題下方顯示 */
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--card-color);
+    color: var(--text-primary);
+    padding: 12px 16px;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-focus);
+    box-shadow: var(--shadow-floating);
+    white-space: normal;
+    max-width: 320px;                       /* 較寬的tooltip */
+    width: max-content;
+    z-index: 10000;
+    opacity: 1;
+    visibility: visible;
     font-size: 0.8rem;
-    font-weight: 600;
-    color: white;
-    text-align: center;
+    line-height: 1.4;
+    font-weight: 400;                       /* 重置字重 */
+    pointer-events: none;
+    animation: tooltipFadeIn 0.3s ease-out;
 }
 
-.level-badge.high {
-    background-color: #2E8B57;
+th[title]:hover::before {
+    content: '';
+    position: absolute;
+    top: calc(100% + 2px);
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-bottom-color: var(--border-focus);
+    z-index: 10001;
 }
 
-.level-badge.medium {
-    background-color: #FFA500;
+/* 特定欄位寬度調整 - 確保充足空間 */
+th:nth-child(1) { min-width: 70px; }       /* 排名 */
+th:nth-child(2) { min-width: 90px; }       /* 行政區 */
+th:nth-child(3) { min-width: 100px; }      /* 潛力等級 */
+th:nth-child(4) { min-width: 140px; }      /* 綜合分數 */
+th:nth-child(5) { min-width: 120px; }      /* 工作年齡比例 */
+th:nth-child(6) { min-width: 140px; }      /* 家戶中位數所得 */
+th:nth-child(7) { min-width: 120px; }      /* 第三產業比例 */
+th:nth-child(8) { min-width: 90px; }       /* 醫療指數 */
+th:nth-child(9) { min-width: 110px; }      /* 商業集中度 */
+
+th:hover {
+    background-color: rgba(144, 202, 249, 0.2);
 }
 
-.level-badge.low {
-    background-color: #DC143C;
-}
-
-/* 洞察區域 */
-.insights-section {
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 15px;
-    padding: 25px;
-    margin-bottom: 30px;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(10px);
-}
-
-.insights-section h2 {
-    font-size: 1.5rem;
-    color: #2c3e50;
-    margin-bottom: 20px;
-    border-bottom: 2px solid #3498db;
-    padding-bottom: 10px;
-}
-
-.insights-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
-}
-
-.insight-card {
-    background: #f8f9fa;
-    border-radius: 10px;
-    padding: 20px;
-    transition: transform 0.3s ease;
-}
-
-.insight-card:hover {
-    transform: translateY(-3px);
-}
-
-.insight-card h3 {
-    color: #2c3e50;
-    margin-bottom: 15px;
-}
-
-.insight-card ul {
-    list-style: none;
-    padding: 0;
-}
-
-.insight-card li {
-    margin-bottom: 8px;
-    padding-left: 20px;
+th.sorted-asc,
+th.sorted-desc {
+    background-color: #262626 !important;
     position: relative;
 }
 
-.insight-card li:before {
-    content: "▸";
-    color: #3498db;
-    font-weight: bold;
+th.sorted-asc::after,
+th.sorted-desc::after {
+    content: '';
     position: absolute;
     left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-color), transparent);
+}
+
+th i {
+    margin-left: 8px;
+    color: #888;
+    font-size: 0.8em;
+}
+
+td {
+    padding: 12px;
+    border-bottom: 1px solid var(--divider-color);
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+/* 行政區名稱列不截斷 */
+td:nth-child(2) {
+    white-space: normal;
+    min-width: 100px;
+    max-width: none;
+}
+
+/* 潛力等級列不截斷 */
+td:nth-child(3) {
+    white-space: normal;
+    min-width: 120px;
+    max-width: none;
+}
+
+
+
+tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* 卡片點擊高亮表格行 */
+tbody tr.highlighted-row {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+    border-left: 4px solid var(--primary-color);
+    transform: translateX(4px);
+    transition: all 0.3s ease;
+}
+
+/* 潛力等級標籤 */
+.level-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: white;
+    opacity: 0.85;  /* 調高透明度 */
+}
+
+.level-badge.high {
+    background-color: var(--high-potential);
+}
+
+.level-badge.medium {
+    background-color: var(--medium-potential);
+}
+
+.level-badge.low {
+    background-color: var(--low-potential);
+}
+
+/* 行hover tooltip樣式 */
+.row-tooltip {
+    position: absolute;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    max-width: 280px;
+    backdrop-filter: blur(16px);
+    animation: tooltipFadeIn 0.2s ease-out;
+}
+
+@keyframes tooltipFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.tooltip-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.tooltip-icon {
+    font-size: 1.2rem;
+}
+
+.tooltip-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.tooltip-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* 新的列表樣式 */
+.tooltip-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.tooltip-list li {
+    margin-bottom: 4px;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: var(--text-primary);
+}
+
+.tooltip-list li:last-child {
+    margin-bottom: 0;
+}
+
+/* 保留原有樣式以防向後兼容 */
+.tooltip-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.tooltip-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.tooltip-value {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    font-weight: 500;
+    text-align: right;
+}
+
+/* 地圖區域 */
+/* 統一地圖區域樣式 */
+.map-section {
+    background: var(--card-color);
+    border-radius: var(--border-radius-xl);      /* 統一16px圓角 */
+    box-shadow: var(--shadow-card);              /* 統一陰影 */
+    padding: var(--spacing-lg);                  /* 統一24px內距 */
+    margin-bottom: var(--spacing-xl);            /* 統一32px底部間距 */
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.map-section:hover {
+    box-shadow: var(--shadow-elevated);
+}
+
+.map-section h2 {
+    font-size: 1.375rem;                         /* 22px - H2層級 */
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-lg);            /* 統一24px間距 */
+    padding-bottom: var(--spacing-md);           /* 16px內距 */
+    border-bottom: 1px solid var(--divider-color);
+    position: relative;
+}
+
+/* H2標題底線增強效果 */
+.map-section h2::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 60px;
+    height: 2px;
+    background: var(--primary-color);
+}
+
+.map-container-iframe {
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-2);
+    border: 1px solid var(--border-color);
+}
+
+.map-container-iframe iframe {
+    border: none !important;
+    border-radius: var(--border-radius);
 }
 
 /* 方法說明 */
+/* 統一方法論區域樣式 */
 .methodology-section {
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 15px;
-    padding: 25px;
-    margin-bottom: 30px;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(10px);
+    background: var(--card-color);
+    border-radius: var(--border-radius-xl);      /* 統一16px圓角 */
+    box-shadow: var(--shadow-card);              /* 統一陰影 */
+    padding: var(--spacing-lg);                  /* 統一24px內距 */
+    margin-bottom: var(--spacing-xl);            /* 統一32px底部間距 */
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.methodology-section:hover {
+    box-shadow: var(--shadow-elevated);
 }
 
 .methodology-section h2 {
-    font-size: 1.5rem;
-    color: #2c3e50;
-    margin-bottom: 20px;
-    border-bottom: 2px solid #3498db;
-    padding-bottom: 10px;
+    font-size: 1.375rem;                         /* 22px - H2層級 */
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-lg);            /* 統一24px間距 */
+    padding-bottom: var(--spacing-md);           /* 16px內距 */
+    border-bottom: 1px solid var(--divider-color);
+    position: relative;
+}
+
+/* H2標題底線增強效果 */
+.methodology-section h2::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 60px;
+    height: 2px;
+    background: var(--primary-color);
 }
 
 .method-steps {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    max-width: 1200px;          /* 與其他容器一致 */
+    margin: 0 auto;
+    padding: 0;                 /* 移除左右padding讓卡片更寬 */
 }
 
 .step {
-    background: #f8f9fa;
-    border-radius: 10px;
-    padding: 20px;
-    border-left: 4px solid #3498db;
-    transition: transform 0.3s ease;
-}
-
-.step:hover {
-    transform: translateX(5px);
+    width: 100%;                 /* 確保佔用全寬 */
+    padding: 24px 32px;          /* 增加內部空間 */
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: var(--border-radius);
+    border-left: 4px solid var(--primary-color);
+    border: 1px solid var(--border-color);
+    min-height: 120px;           /* 設定最小高度確保一致性 */
+    box-sizing: border-box;      /* 確保padding包含在width內 */
 }
 
 .step h4 {
-    color: #2c3e50;
-    margin-bottom: 10px;
+    color: var(--primary-color);
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin-bottom: 8px;
 }
 
 .step p {
+    color: var(--text-secondary);
     font-size: 0.9rem;
-    color: #7f8c8d;
     line-height: 1.5;
 }
 
 /* 頁腳 */
 .footer {
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 15px;
-    padding: 20px;
+    background: var(--card-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-1);
+    padding: var(--spacing-lg);              /* 增加內距 */
     text-align: center;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(10px);
+    margin-top: var(--spacing-section);
+    border: 1px solid var(--border-color);
 }
 
-.footer p {
-    color: #7f8c8d;
+/* 資料來源區域 */
+.data-source {
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--divider-color);
 }
 
-.footer a {
-    color: #3498db;
+.source-title {
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-sm);
+    margin-top: 0;
+}
+
+.source-info {
+    margin-bottom: var(--spacing-sm);
+    margin-top: 0;
+}
+
+.source-info a {
+    color: var(--primary-color);
     text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: color 0.3s ease;
 }
 
-.footer a:hover {
+.source-info a:hover {
+    color: var(--text-emphasis);
     text-decoration: underline;
+}
+
+.source-note {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    line-height: 1.4;
+    margin: 0;
+    font-style: italic;
+}
+
+/* 版權資訊 */
+.footer .copyright {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.footer .copyright span {
+    display: inline-flex;
+    align-items: center;
+}
+
+.footer .copyright a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.footer .copyright a .fab.fa-github {
+    font-size: 1rem;
+    color: #888888;
+    transition: transform 0.3s ease, color 0.3s ease;
+    line-height: 1;
+    vertical-align: middle;
+}
+
+.footer .copyright a:hover .fab.fa-github {
+    transform: scale(1.1);
+    color: #aaaaaa;
 }
 
 /* 響應式設計 */
 @media (max-width: 768px) {
     .container {
-        padding: 15px;
+        padding: 16px;
     }
-
+    
+    .header {
+        padding: 24px;
+    }
+    
     .header h1 {
         font-size: 2rem;
     }
-
+    
     .main-content {
         grid-template-columns: 1fr;
+        gap: 20px;
     }
-
+    
     .metrics-cards {
         grid-template-columns: 1fr;
+        gap: var(--spacing-md);          /* 減少間距 */
     }
-
-    .insights-grid {
-        grid-template-columns: 1fr;
+    
+    .card {
+        min-height: 180px;               /* 手機上調整最小高度 */
     }
-
+    
+    .districts-list {
+        white-space: normal;             /* 手機上允許換行 */
+        overflow: visible;
+        text-overflow: initial;
+    }
+    
     .method-steps {
-        grid-template-columns: 1fr;
+        max-width: 100%;
+        padding: 0 16px;        /* 手機上減少padding */
     }
-
-    table {
-        font-size: 0.8rem;
+    
+    .step {
+        padding: 20px 24px;     /* 手機上調整內距 */
+        min-height: auto;       /* 手機上移除最小高度限制 */
+    }
+    
+    .metric-value {
+        font-size: 2.5rem;
+    }
+    
+    /* 調整tooltip在小螢幕上的顯示 */
+    .tooltip-trigger::after {
+        max-width: 250px;
+        font-size: 0.75rem;
     }
 }
 
-/* 舊版標籤兼容性 */
-.high-potential-label {
-    background-color: #e74c3c;
-    color: white;
-    padding: 5px 10px;
-    border-radius: 15px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    display: inline-block;
+@media (max-width: 480px) {
+    .chart-container {
+        height: 300px;
+    }
+    
+    .card {
+        padding: 20px;
+    }
+    
+    .chart-section {
+        padding: 20px;
+    }
 }
 
-.medium-potential-label {
-    background-color: #f39c12;
-    color: white;
-    padding: 5px 10px;
-    border-radius: 15px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    display: inline-block;
+/* 載入動畫 */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-.low-potential-label {
-    background-color: #3498db;
-    color: white;
-    padding: 5px 10px;
-    border-radius: 15px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    display: inline-block;
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-6px);
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+.card, .chart-section, .data-table-section, .map-section, .methodology-section {
+    animation: fadeIn 0.6s ease-out;
+}
+
+/* 滾動條樣式 (暗色模式) */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--background-color);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
 } 
