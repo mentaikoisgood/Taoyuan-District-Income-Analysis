@@ -87,7 +87,9 @@ def prepare_dashboard_data(results_df, config, df):
         '商業_hhi_index': '商業集中度指數',
         '所得_median_household_income': '家戶中位數所得',
         'tertiary_industry_ratio': '第三產業比例',
-        'medical_index': '醫療指數'
+        'medical_beds_per_1k': '醫療床位密度',
+        'medical_staff_per_1k': '醫療人員密度', 
+        'medical_facility_density': '醫療機構密度'
     }
     
     # 準備區域詳細數據
@@ -170,10 +172,12 @@ def create_feature_importance_data(config):
     
     feature_mapping = {
         '人口_working_age_ratio': '工作年齡人口比例',
-        '商業_hhi_index': '商業集中度指數',
+        '商業_hhi_index': '商業集中度指數', 
         '所得_median_household_income': '家戶中位數所得',
         'tertiary_industry_ratio': '第三產業比例',
-        'medical_index': '醫療指數'
+        'medical_beds_per_1k': '醫療床位密度',
+        'medical_staff_per_1k': '醫療人員密度',
+        'medical_facility_density': '醫療機構密度'
     }
     
     for feature, props in feature_weights.items():
@@ -257,7 +261,10 @@ def merge_geodata_with_results(gdf, results_df):
     
     # 修正 GeoDataFrame 中的欄位名稱不一致問題
     if '名稱' in gdf.columns and '區域別' not in gdf.columns:
-        gdf = gdf.rename(columns={'名稱': '區域別'})
+        # 處理名稱格式差異：移除"桃園市"前綴
+        gdf = gdf.copy()
+        gdf['區域別'] = gdf['名稱'].str.replace('桃園市', '', regex=False)
+        print(f"📝 已將地理數據中的行政區名稱統一格式")
 
     # 確保 '區域別' 欄位存在
     if '區域別' not in gdf.columns or '區域別' not in results_df.columns:
@@ -647,16 +654,27 @@ def generate_map_statistics(merged_gdf, config):
             f_stat_val = float(round(f_stat_val, 3))
             p_value_val = float(round(p_value_val, 6))
 
-            # Calculate eta squared (effect size)
+            # Calculate eta squared (effect size) using correct ANOVA formula
             all_scores = scored_gdf['綜合分數'].values
-            ss_total = np.sum((all_scores - np.mean(all_scores))**2)
+            all_labels = scored_gdf['3級Jenks分級'].values
             
-            ss_between = 0
-            for group_scores in groups_for_anova:
-                ss_between += len(group_scores) * (np.mean(group_scores) - np.mean(all_scores))**2
+            # 使用正確的ANOVA統計計算
+            from step4_validation import calculate_anova_statistics
+            anova_stats = calculate_anova_statistics(all_scores, all_labels)
             
-            eta_squared_val = (ss_between / ss_total) if ss_total > 0 else 0
+            # 使用計算出的統計指標
+            ss_total = anova_stats['sst']
+            ss_between = anova_stats['ssb']
+            ss_within = anova_stats['ssw']
+            eta_squared_val = anova_stats['eta_squared']
             eta_squared_val = float(round(eta_squared_val, 3))
+            
+            # 記錄統計信息用於調試
+            print(f"📊 地圖統計計算:")
+            print(f"   總平方和 (SST): {ss_total:.2f}")
+            print(f"   組間平方和 (SSB): {ss_between:.2f}")
+            print(f"   組內平方和 (SSW): {ss_within:.2f}")
+            print(f"   效應大小 (η²): {eta_squared_val:.3f}")
         else:
             print(f"⚠️ 少於2個有效數據組 ({len(groups_for_anova)} 組) 無法計算F統計量。")
             f_stat_val, p_value_val, eta_squared_val = 'N/A', 'N/A', 'N/A'

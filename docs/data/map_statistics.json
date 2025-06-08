@@ -1,56 +1,56 @@
 {
-  "f_statistic": 54.456,
-  "p_value": 4e-06,
-  "effect_size": 0.916,
+  "f_statistic": 63.293,
+  "p_value": "N/A",
+  "effect_size": 0.927,
   "level_statistics": {
     "高潛力": {
       "count": 4,
       "districts": [
-        "蘆竹區",
+        "桃園區",
         "龜山區",
-        "中壢區",
-        "桃園區"
+        "蘆竹區",
+        "中壢區"
       ],
-      "avg_score": 8.47,
+      "avg_score": 8.62,
       "score_range": [
-        7.12,
+        7.61,
         10.0
       ]
     },
     "中潛力": {
       "count": 5,
       "districts": [
-        "龍潭區",
-        "大園區",
         "楊梅區",
         "平鎮區",
+        "龍潭區",
+        "大園區",
         "八德區"
       ],
-      "avg_score": 4.42,
+      "avg_score": 4.67,
       "score_range": [
-        3.62,
-        4.81
+        3.85,
+        5.12
       ]
     },
     "低潛力": {
       "count": 4,
       "districts": [
-        "復興區",
         "觀音區",
-        "新屋區",
-        "大溪區"
+        "大溪區",
+        "復興區",
+        "新屋區"
       ],
-      "avg_score": 1.14,
+      "avg_score": 1.3,
       "score_range": [
         0.0,
-        2.25
+        2.53
       ]
     }
   },
   "total_districts": 13,
   "score_distribution": {
-    "mean": 4.66,
-    "std": 3.13,
+    "mean": 4.85,
+    "std": 3.11,
     "min": 0.0,
     "max": 10.0
   }

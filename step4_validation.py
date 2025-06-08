@@ -66,77 +66,117 @@ def load_classification_results():
         print("請先執行 step3_ranking_classification.py")
         return None, None, None
 
-def analyze_classification_quality(scores, labels):
-    """分析3級分類質量"""
-    print("\n📈 3級分類質量分析...")
+def calculate_anova_statistics(scores, labels):
+    """
+    使用正確的ANOVA公式計算統計指標
     
-    def calculate_within_group_variance(scores, labels):
-        """計算組內方差"""
-        total_variance = 0
-        unique_labels = pd.Series(labels).unique()
-        
-        for label in unique_labels:
-            mask = pd.Series(labels) == label
-            group_scores = scores[mask]
-            if len(group_scores) > 1:
-                total_variance += np.var(group_scores) * len(group_scores)
-        
-        return total_variance / len(scores)
+    Parameters:
+    scores: array-like, 綜合分數
+    labels: array-like, 分級標籤
     
-    def calculate_between_group_variance(scores, labels):
-        """計算組間方差"""
-        overall_mean = np.mean(scores)
-        total_variance = 0
-        unique_labels = pd.Series(labels).unique()
-        
-        for label in unique_labels:
-            mask = pd.Series(labels) == label
-            group_scores = scores[mask]
-            group_mean = np.mean(group_scores)
-            total_variance += (group_mean - overall_mean) ** 2 * len(group_scores)
-        
-        return total_variance / len(scores)
+    Returns:
+    dict: 包含所有統計指標的字典
+    """
+    scores = np.array(scores)
+    labels = np.array(labels)
     
-    # 計算組內外方差
-    within_var = calculate_within_group_variance(scores, labels)
-    between_var = calculate_between_group_variance(scores, labels)
+    # 基本統計
+    total_mean = np.mean(scores)
+    total_n = len(scores)
+    unique_labels = np.unique(labels)
+    k = len(unique_labels)  # 組數
     
-    # F統計量和效應大小
-    f_stat = between_var / within_var if within_var > 0 else np.inf
-    eta_squared = between_var / (between_var + within_var)
+    # 計算總平方和 (SST)
+    sst = np.sum((scores - total_mean) ** 2)
     
-    # 各級別統計
-    level_stats = {}
-    unique_labels = pd.Series(labels).unique()
+    # 計算組間平方和 (SSB) 和組內平方和 (SSW)
+    ssb = 0
+    ssw = 0
+    group_stats = {}
     
     for label in unique_labels:
-        mask = pd.Series(labels) == label
+        mask = labels == label
         group_scores = scores[mask]
-        level_stats[label] = {
-            'count': len(group_scores),
-            'mean': np.mean(group_scores),
+        group_n = len(group_scores)
+        group_mean = np.mean(group_scores)
+        
+        # 組間平方和貢獻
+        ssb += group_n * (group_mean - total_mean) ** 2
+        
+        # 組內平方和貢獻
+        ssw += np.sum((group_scores - group_mean) ** 2)
+        
+        # 保存組統計
+        group_stats[label] = {
+            'count': group_n,
+            'mean': group_mean,
             'std': np.std(group_scores),
             'min': np.min(group_scores),
             'max': np.max(group_scores)
         }
     
-    quality_metrics = {
-        'within_variance': within_var,
-        'between_variance': between_var,
-        'f_statistic': f_stat,
+    # 驗證：SST = SSB + SSW
+    sst_check = ssb + ssw
+    
+    # 計算均方
+    msb = ssb / (k - 1) if k > 1 else 0  # 組間均方
+    msw = ssw / (total_n - k) if total_n > k else 0  # 組內均方
+    
+    # F統計量
+    f_statistic = msb / msw if msw > 0 else np.inf
+    
+    # 效應大小 (eta squared)
+    eta_squared = ssb / sst if sst > 0 else 0
+    
+    return {
+        'sst': sst,  # 總平方和
+        'ssb': ssb,  # 組間平方和
+        'ssw': ssw,  # 組內平方和
+        'sst_check': sst_check,  # 驗證值
+        'msb': msb,  # 組間均方
+        'msw': msw,  # 組內均方
+        'f_statistic': f_statistic,
         'eta_squared': eta_squared,
-        'level_stats': level_stats
+        'total_mean': total_mean,
+        'total_n': total_n,
+        'k': k,
+        'group_stats': group_stats,
+        # 舊版本相容性 - 計算"方差"形式（除以n）
+        'between_variance': ssb / total_n,
+        'within_variance': ssw / total_n
+    }
+
+def analyze_classification_quality(scores, labels):
+    """分析3級分類質量 - 使用正確的ANOVA統計"""
+    print("\n📈 3級分類質量分析...")
+    
+    # 使用新的統計計算函數
+    stats = calculate_anova_statistics(scores, labels)
+    
+    quality_metrics = {
+        'sst': stats['sst'],
+        'ssb': stats['ssb'], 
+        'ssw': stats['ssw'],
+        'f_statistic': stats['f_statistic'],
+        'eta_squared': stats['eta_squared'],
+        'between_variance': stats['between_variance'],  # 保持向後相容
+        'within_variance': stats['within_variance'],    # 保持向後相容
+        'level_stats': stats['group_stats']
     }
     
-    print(f"  質量指標:")
-    print(f"    組內方差: {within_var:.2f}")
-    print(f"    組間方差: {between_var:.2f}")
-    print(f"    F統計量: {f_stat:.2f}")
-    print(f"    效應大小(η²): {eta_squared:.3f}")
+    print(f"  統計指標:")
+    print(f"    總平方和 (SST): {stats['sst']:.2f}")
+    print(f"    組間平方和 (SSB): {stats['ssb']:.2f}")
+    print(f"    組內平方和 (SSW): {stats['ssw']:.2f}")
+    print(f"    驗證 (SSB + SSW): {stats['sst_check']:.2f}")
+    print(f"    組間均方 (MSB): {stats['msb']:.2f}")
+    print(f"    組內均方 (MSW): {stats['msw']:.2f}")
+    print(f"    F統計量: {stats['f_statistic']:.2f}")
+    print(f"    效應大小(η²): {stats['eta_squared']:.3f}")
     
     print(f"\n  各級別統計:")
-    for label, stats in level_stats.items():
-        print(f"    {label}: {stats['count']}個區域, 平均{stats['mean']:.1f}±{stats['std']:.1f}")
+    for label, group_stats in stats['group_stats'].items():
+        print(f"    {label}: {group_stats['count']}個區域, 平均{group_stats['mean']:.1f}±{group_stats['std']:.1f}")
     
     return quality_metrics
 
